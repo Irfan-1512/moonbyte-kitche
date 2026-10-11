@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moonbyte</title>
+  <title>Moonbyte Kitchen</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root[data-theme="dark"] {
@@ -585,8 +585,25 @@
   font-size: 12px;
   color: var(--text2);
 }
+
+/* Recipe card */
+.recipe-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.recipe-hint { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+.ing-list { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
+.ing-row label { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 6px 4px; cursor: pointer; }
+.ing-row input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+.ing-tag { font-size: 10px; color: var(--text2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 1px 7px; }
+.card-btn { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--accent); background: rgba(147,148,165,0.15); color: var(--accent2); cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; font-weight: 500; }
+.card-btn:hover { background: var(--glass-hover); }
+.card-btn:disabled { opacity: 0.5; cursor: default; }
+.card-btn.ghost { background: transparent; border-color: var(--glass-border); color: var(--text2); }
+.sub-item { border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 12px; margin-top: 8px; font-size: 13px; }
+.sub-item p { margin-top: 4px; }
+.sub-item .muted, .recipe-note { color: var(--text2); font-size: 12px; }
+.sub-actions { display: flex; gap: 6px; margin-top: 8px; }
+.sub-status { font-size: 12px; margin-top: 6px; color: var(--accent2); }
+.summary-box { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); font-size: 13px; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 </head>
 <body>
 
@@ -595,7 +612,7 @@
   <div class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <span class="sidebar-logo-icon">🌙</span>
-      <span class="sidebar-logo-text">Moonbyte</span>
+      <span class="sidebar-logo-text">Moonbyte Kitchen</span>
     </div>
     <div class="sidebar-section">
       <button class="new-chat-btn" onclick="clearMemory()">✚ New Chat</button>
@@ -621,7 +638,7 @@
           <div class="status-dot"></div>
           <span class="status-text">Online</span>
         </div>
-        <span class="header-title" id="mode-title">💬 General</span>
+        <span class="header-title" id="mode-title">🍳 Recipe</span>
       </div>
       <div class="header-right">
         <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
@@ -631,12 +648,9 @@
     </div>
 
     <div class="modes-bar">
-      <button class="mode-btn active" onclick="switchMode('general', this)">💬 General</button>
-      <button class="mode-btn" onclick="switchMode('study', this)">📚 Study</button>
-      <button class="mode-btn" onclick="switchMode('code', this)">💻 Code</button>
+      <button class="mode-btn active" onclick="switchMode('recipe', this)">🍳 Recipe</button>
       <button class="mode-btn" onclick="switchMode('style', this)">👔 Style</button>
-      <button class="mode-btn" onclick="switchMode('recipe', this)">🍳 Recipe</button>
-      <button class="mode-btn" onclick="switchMode('ppt', this)">📊 PPT</button>
+      <button class="mode-btn" onclick="switchMode('general', this)">💬 General</button>
     </div>
 
     <div id="chat-box"></div>
@@ -644,12 +658,12 @@
     <div class="input-area">
       <div class="input-row">
         <div class="input-wrap">
-          <input id="user-input" type="text" placeholder="Ask Moonbyte anything..." />
+          <input id="user-input" type="text" placeholder="What are we cooking today?" />
           <button id="mic-btn" onclick="startVoice()">🎤</button>
         </div>
         <button id="send-btn" onclick="sendMessage()">➤</button>
       </div>
-      <div class="input-hint">Press Enter to send · Switch modes above</div>
+      <div class="input-hint">Press Enter to send · Type / for commands</div>
     </div>
   </div>
 <div class="avatar-picker" id="avatar-picker">
@@ -667,57 +681,25 @@
   <div class="avatar-option" onclick="setAvatar('👑')">👑</div>
 </div>
 <div class="command-bar" id="command-bar">
-  <div class="command-item" onclick="runCommand('general')">
-    <span class="command-key">/general</span>
-    <span class="command-desc">Switch to General mode</span>
-  </div>
-  <div class="command-item" onclick="runCommand('study')">
-    <span class="command-key">/study</span>
-    <span class="command-desc">Switch to Study mode</span>
-  </div>
-  <div class="command-item" onclick="runCommand('code')">
-    <span class="command-key">/code</span>
-    <span class="command-desc">Switch to Code mode</span>
+  <div class="command-item" onclick="runCommand('recipe')">
+    <span class="command-key">/recipe</span>
+    <span class="command-desc">Switch to Recipe mode</span>
   </div>
   <div class="command-item" onclick="runCommand('style')">
     <span class="command-key">/style</span>
     <span class="command-desc">Switch to Style mode</span>
   </div>
-  <div class="command-item" onclick="runCommand('recipe')">
-    <span class="command-key">/recipe</span>
-    <span class="command-desc">Switch to Recipe mode</span>
-  </div>
-  <div class="command-item" onclick="runCommand('clear')">
-    <span class="command-key">/clear</span>
-    <span class="command-desc">Clear memory</span>
-  </div>
-  <div class="command-item" onclick="runCommand('time')">
-    <span class="command-key">/time</span>
-    <span class="command-desc">Ask current time</span>
-  </div>
-  <div class="command-item" onclick="runCommand('weather')">
-    <span class="command-key">/weather</span>
-    <span class="command-desc">Weather in Hyderabad</span>
-  </div>
-  <div class="command-item" onclick="runCommand('motivate')">
-    <span class="command-key">/motivate</span>
-    <span class="command-desc">Get motivated 💪</span>
-  </div>
-  <div class="command-item" onclick="runCommand('joke')">
-    <span class="command-key">/joke</span>
-    <span class="command-desc">Tell me a joke 😄</span>
-  </div>
-  <div class="command-item" onclick="runCommand('dbms')">
-    <span class="command-key">/dbms</span>
-    <span class="command-desc">Quick DBMS help</span>
-  </div>
-  <div class="command-item" onclick="runCommand('dsa')">
-    <span class="command-key">/dsa</span>
-    <span class="command-desc">Quick DSA topic</span>
+  <div class="command-item" onclick="runCommand('general')">
+    <span class="command-key">/general</span>
+    <span class="command-desc">Switch to General mode</span>
   </div>
   <div class="command-item" onclick="runCommand('outfit')">
     <span class="command-key">/outfit</span>
     <span class="command-desc">Outfit suggestion 👔</span>
+  </div>
+  <div class="command-item" onclick="runCommand('clear')">
+    <span class="command-key">/clear</span>
+    <span class="command-desc">Clear memory</span>
   </div>
   <div class="command-item" onclick="runCommand('help')">
     <span class="command-key">/help</span>
@@ -729,37 +711,20 @@
     let chatSessions = JSON.parse(localStorage.getItem('moonbyte-sessions')) || [];
 
     const modes = {
-      general: `You are Moonbyte, Irfan's personal AI. Talk to him like a close friend — casual, warm, real. Never sound robotic or formal.
+      recipe: `You are Moonbyte in Recipe Mode, a friendly kitchen companion. ALWAYS respond with a single JSON object and nothing else (no markdown fences, no text outside the JSON). There are two shapes:
+1) When the user asks for a dish or recipe: {"type":"recipe","dish":"dish name","servings":4,"ingredients":[{"name":"chicken","qty":"500 g","optional":false}]}
+List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to-haves as optional true. Use the servings the user gives, otherwise 2.
+2) For anything else (questions, thanks, small talk): {"type":"chat","reply":"a short, warm, casual answer"}`,
 
-Here's everything about Irfan:
-- 2nd year CSE student at ACE Engineering College, Hyderabad
-- Calm and chill personality
-- Interests: web development, fashion, cooking, AI, Marvel (favourite: Moon Knight)
-- Projects: Gentleman's Wardrobe (fashion website), My Kitchen Diaries (recipe app), Moonbyte (this AI)
-- Favourite food: biryani and pizza
-- Username: moonbyte
-- Goals: campus placements in 3rd year, become a web developer
-- Learning: HTML, CSS, JavaScript, Node.js, DSA
+      style: `You are Moonbyte in Style Mode, a friendly personal fashion advisor. Give practical outfit advice for everyday life and special occasions. Be real, casual and helpful.`,
 
-How to talk to him:
-- Keep it short and casual like texting a friend
-- No bullet points unless necessary
-- No formal language
-- Use his name sometimes but not every message
-- Be real, be human, be warm`,
+      general: `You are Moonbyte, a friendly AI kitchen companion. Talk like a close friend: casual, warm, real. Never sound robotic or formal. Keep messages short, with no bullet points unless necessary.`
+    };
 
-      study: `You are Moonbyte in Study Mode helping Irfan. He's a CSE student studying DBMS, OS, DSA, Java, web development. Explain simply like a friend who's good at studies. Keep it easy to understand, give examples, motivate him when needed. No robotic explanations.`,
-      code: `You are Moonbyte in Code Mode. Help Irfan with code like a senior developer friend. He knows HTML, CSS, JavaScript and is learning more. Be direct, explain clearly, fix his bugs, suggest improvements. Talk casually.`,
-      style: `You are Moonbyte in Style Mode. You are Irfan's personal fashion advisor and friend. He's into men's fashion and style. Give practical outfit advice for a college student in Hyderabad. Be real and casual about it.`,
-      recipe: `You are Moonbyte in Recipe Mode. Help Irfan with cooking like a foodie friend. He loves biryani and pizza. Suggest simple practical recipes. Keep it fun and casual.`,
-      ppt: `You are Moonbyte in Presentation Mode. Irfan will describe a topic and how many slides he wants. Respond ONLY with valid JSON, no other text, no markdown code fences, in this exact structure:
-      {"title": "Presentation Title", "slides": [{"heading": "Slide Heading", "bullets": ["point 1", "point 2", "point 3"]}]}
-      Keep each bullet short (under 15 words). Match the number of slides Irfan asks for (default to 5 if he doesn't say). Do not include anything outside the JSON object.`
-};
-    let currentMode = "general";
-    let systemPrompt = modes.general;
+    let currentMode = "recipe";
+    let systemPrompt = modes.recipe;
 
-        function renderChatHistory() {
+    function renderChatHistory() {
       const container = document.getElementById('chat-history');
       container.innerHTML = '';
       chatSessions.slice(-8).reverse().forEach((session, i) => {
@@ -783,8 +748,8 @@ How to talk to him:
     }
 
     window.onload = () => {
-  initAvatar();
-  const saved = localStorage.getItem('moonbyte-history');
+      initAvatar();
+      const saved = localStorage.getItem('moonbyte-history');
       if (saved) {
         const parsed = JSON.parse(saved);
         const recent = parsed.slice(-30);
@@ -792,14 +757,14 @@ How to talk to him:
           conversationHistory.push(msg);
           addMessage(msg.role === "user" ? "user" : "assistant", msg.content);
         });
-        addMessage("assistant", "Welcome back Irfan! 🌙 I remember our last conversation.");
+        addMessage("assistant", "Welcome back! 🌙 I remember our last conversation.");
       } else {
-        addMessage("assistant", "Hey Irfan! 🌙 Moonbyte is online. What can I help you with today?");
+        addMessage("assistant", "Hey! 🌙 Moonbyte Kitchen is online. Tell me what you want to cook, or what's in your kitchen.");
       }
       renderChatHistory();
     };
 
-      function switchMode(mode, btn) {
+    function switchMode(mode, btn) {
       if (conversationHistory.length > 0) {
         const firstMsg = conversationHistory.find(m => m.role === 'user');
         const title = firstMsg ? firstMsg.content.slice(0, 30) + '...' : 'Conversation';
@@ -813,12 +778,9 @@ How to talk to him:
       document.getElementById('mode-title').textContent = btn.textContent.trim();
       document.getElementById('chat-box').innerHTML = '';
       const welcomes = {
-        general: "Hey Irfan! 🌙 Switched to General mode. What's on your mind?",
-        study: "📚 Study Mode ON! What subject are we tackling today Irfan?",
-        code: "💻 Code Mode ON! Share your code or tell me what you're building Irfan!",
-        style: "👔 Style Mode ON! Let's talk fashion Irfan. What's the occasion?",
-        recipe: "🍳 Recipe Mode ON! Hungry Irfan? Tell me what ingredients you have!",
-        ppt: "📊 Presentation Mode ON! Tell me the topic and how many slides you want, Irfan!"
+        recipe: "🍳 Recipe Mode ON! Tell me what you want to cook, or what ingredients you have.",
+        style: "👔 Style Mode ON! Let's talk fashion. What's the occasion?",
+        general: "Hey! 🌙 Switched to General mode. What's on your mind?"
       };
       addMessage("assistant", welcomes[mode]);
       conversationHistory.length = 0;
@@ -837,7 +799,7 @@ How to talk to him:
       localStorage.removeItem('moonbyte-history');
       conversationHistory.length = 0;
       document.getElementById('chat-box').innerHTML = '';
-      addMessage("assistant", "Memory cleared! Fresh start Irfan. 🌙");
+      addMessage("assistant", "Memory cleared! Fresh start. 🌙");
     }
 
     async function sendMessage() {
@@ -845,17 +807,17 @@ How to talk to him:
       const btn = document.getElementById("send-btn");
       const userText = input.value.trim();
       if (!userText) {
-    const wrap = document.querySelector('.input-wrap');
-    wrap.classList.add('shake');
-    setTimeout(() => wrap.classList.remove('shake'), 400);
-    return;
-     }
+        const wrap = document.querySelector('.input-wrap');
+        wrap.classList.add('shake');
+        setTimeout(() => wrap.classList.remove('shake'), 400);
+        return;
+      }
 
       addMessage("user", userText);
       input.value = "";
+      document.getElementById('command-bar').classList.remove('open');
       btn.classList.add('clicked');
       setTimeout(() => btn.classList.remove('clicked'), 300);
-      btn.disabled = true;
       btn.disabled = true;
 
       const mathRegex = /^[\d\s\+\-\*\/\(\)\.]+$/;
@@ -865,55 +827,45 @@ How to talk to him:
         processedText = `${userText} = ${result}`;
       }
 
-     // Check if it's a search query
-const searchTriggers = ['search', 'find', 'look up', 'what is', 'who is', 'latest', 'news', 'current'];
-const isSearch = searchTriggers.some(trigger => userText.toLowerCase().startsWith(trigger));
-
-conversationHistory.push({ role: "user", content: processedText });
-const thinkingDiv = addMessage("thinking", "");
-thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
-thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
+      conversationHistory.push({ role: "user", content: processedText });
+      const thinkingDiv = addMessage("thinking", "");
+      thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
 
       try {
-        let reply = null;
-try {
-  const groqResponse = await fetch("/.netlify/functions/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: conversationHistory.slice(-10),
-      systemPrompt: systemPrompt + `\n\nCURRENT TIME RIGHT NOW: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}. When user asks for time or date, directly tell them this exact time.`,
-      searchQuery: isSearch ? userText : null
-    })
-  });
-  const groqData = await groqResponse.json();
-  if (groqData.reply) reply = groqData.reply;
-} catch (e) { console.log("Groq failed 🔄", e); }
+        const reply = await callChat(
+          systemPrompt + `\n\nCURRENT TIME RIGHT NOW: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}. When user asks for time or date, directly tell them this exact time.`,
+          conversationHistory.slice(-10),
+          currentMode === 'recipe' ? 2000 : 1000
+        );
 
-        conversationHistory.push({ role: "assistant", content: reply || "Something went wrong." });
+        let shown = reply || "Something went wrong. Try again!";
+        let recipe = null;
+        if (currentMode === 'recipe' && reply) {
+          const parsed = parseJson(reply);
+          if (parsed && parsed.type === 'recipe') recipe = validRecipe(parsed);
+          if (!recipe) {
+            if (parsed && parsed.type === 'chat' && typeof parsed.reply === 'string') shown = parsed.reply;
+            else if (reply.trim().startsWith('{')) shown = "That answer got cut off. Try asking again.";
+          }
+        }
+
+        const historyText = recipe
+          ? `[Showed a checklist for ${recipe.dish}, serves ${recipe.servings}: ` + recipe.ingredients.map(i => `${i.qty} ${i.name}`.trim()).join(', ') + `]`
+          : shown;
+        conversationHistory.push({ role: "assistant", content: historyText });
         if (conversationHistory.length > 100) conversationHistory.splice(0, conversationHistory.length - 100);
         localStorage.setItem('moonbyte-history', JSON.stringify(conversationHistory));
 
-              thinkingDiv.className = "message assistant";
-
-if (currentMode === "ppt" && reply) {
-  try {
-    const jsonMatch = reply.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON object found in reply");
-    const cleaned = jsonMatch[0];
-    const data = JSON.parse(cleaned);
-    generatePPTX(data);
-    thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble">✅ Your presentation "${data.title}" is ready! Downloading now...</div></div>`;
-  } catch (e) {
-    console.log("PPT parse failed", e);
-    console.log("Raw reply was:", reply);
-    thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble">Couldn't build the slides from that reply — try rephrasing your topic.</div></div>`;
-  }
-} else {
-const replyText = reply || "Something went wrong. Try again!";
-thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble">${formatReply(replyText)}</div></div>`;
-speak(replyText);
-}
+        thinkingDiv.className = "message assistant";
+        thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble"></div></div>`;
+        const bubble = thinkingDiv.querySelector('.msg-bubble');
+        if (recipe) {
+          renderRecipeCard(bubble, recipe);
+          speak(`Here is the ingredient list for ${recipe.dish}. Tick what you already have.`);
+        } else {
+          bubble.innerHTML = formatReply(shown);
+          speak(shown);
+        }
       } catch (error) {
         thinkingDiv.className = "message assistant";
         thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble">Something went wrong. Try again!</div></div>`;
@@ -924,55 +876,191 @@ speak(replyText);
     }
 
     function formatReply(text) {
-      return text
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
         .replace(/\n/g, '<br>');
     }
-    function generatePPTX(data) {
-  const pptx = new PptxGenJS();
-  pptx.defineLayout({ name: 'MOON', width: 10, height: 5.63 });
-  pptx.layout = 'MOON';
 
-  const titleSlide = pptx.addSlide();
-  titleSlide.background = { color: '1a1a2e' };
-  titleSlide.addText(data.title || 'Presentation', {
-    x: 0.5, y: 2, w: 9, h: 1.5, fontSize: 36, bold: true, color: 'FFFFFF', align: 'center'
-  });
 
-  (data.slides || []).forEach(slide => {
-    const s = pptx.addSlide();
-    s.background = { color: 'FFFFFF' };
-    s.addText(slide.heading || '', { x: 0.5, y: 0.4, w: 9, h: 0.8, fontSize: 28, bold: true, color: '1a1a2e' });
-    const bulletText = (slide.bullets || []).map(b => ({ text: b, options: { bullet: true, breakLine: true } }));
-    s.addText(bulletText, { x: 0.7, y: 1.4, w: 8.5, h: 3.8, fontSize: 18, color: '333333' });
-  });
+    // ---------- Recipe flow ----------
+    async function callChat(sys, msgs, maxTokens = 1000) {
+      try {
+        const res = await fetch("/.netlify/functions/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: msgs, systemPrompt: sys, searchQuery: null, maxTokens })
+        });
+        const data = await res.json();
+        return data.reply || null;
+      } catch (e) {
+        console.log("Chat request failed", e);
+        return null;
+      }
+    }
 
-  pptx.writeFile({ fileName: (data.title || 'Moonbyte-Presentation').replace(/[^a-z0-9]/gi, '_') + '.pptx' });
-}
+    function parseJson(text) {
+      if (!text) return null;
+      const m = text.match(/\{[\s\S]*\}/);
+      if (!m) return null;
+      try { return JSON.parse(m[0]); } catch { return null; }
+    }
+
+    function validRecipe(p) {
+      if (typeof p.dish !== 'string' || !p.dish.trim() || !Array.isArray(p.ingredients)) return null;
+      const ingredients = p.ingredients
+        .filter(i => i && typeof i.name === 'string' && i.name.trim())
+        .slice(0, 25)
+        .map(i => ({ name: i.name.trim(), qty: typeof i.qty === 'string' ? i.qty.trim() : '', optional: i.optional === true }));
+      if (!ingredients.length) return null;
+      const servings = Number.isFinite(Number(p.servings)) && Number(p.servings) > 0 ? Number(p.servings) : 2;
+      return { dish: p.dish.trim(), servings, ingredients };
+    }
+
+    function el(tag, cls, text) {
+      const node = document.createElement(tag);
+      if (cls) node.className = cls;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    const SUB_PROMPT = `You suggest cooking substitutes. Respond with a single JSON object and nothing else: {"substitutes":[{"missing":"ingredient name","option":"a substitute, or null","how":"short instruction with quantities","effect":"short note on how it changes the dish"}]}. Give one entry per missing ingredient, in the same order. If there is no good substitute, set option to null and explain in effect. Never suggest anything unsafe.`;
+
+    function renderRecipeCard(bubble, recipe) {
+      const card = el('div', 'recipe-card');
+      card.appendChild(el('div', 'recipe-title', `${recipe.dish} · serves ${recipe.servings}`));
+      card.appendChild(el('div', 'recipe-hint', 'Tick what you already have.'));
+
+      const list = el('ul', 'ing-list');
+      const boxes = recipe.ingredients.map(ing => {
+        const li = el('li', 'ing-row');
+        const label = document.createElement('label');
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        label.appendChild(box);
+        label.appendChild(el('span', '', `${ing.qty} ${ing.name}`.trim()));
+        if (ing.optional) label.appendChild(el('span', 'ing-tag', 'optional'));
+        li.appendChild(label);
+        list.appendChild(li);
+        return box;
+      });
+      card.appendChild(list);
+
+      const btn = el('button', 'card-btn', 'Find substitutes for what I\'m missing');
+      btn.type = 'button';
+      card.appendChild(btn);
+      const result = el('div', 'recipe-result');
+      card.appendChild(result);
+      bubble.appendChild(card);
+
+      btn.onclick = async () => {
+        const missing = recipe.ingredients.filter((_, i) => !boxes[i].checked);
+        result.innerHTML = '';
+        if (!missing.length) {
+          result.appendChild(el('div', 'summary-box', 'You have everything. Happy cooking! 🍳'));
+          return;
+        }
+        const required = missing.filter(m => !m.optional);
+        const skipped = missing.filter(m => m.optional);
+        if (!required.length) {
+          result.appendChild(el('div', 'summary-box', 'Only optional items are missing: ' + skipped.map(s => s.name).join(', ') + '. You can skip them. Happy cooking! 🍳'));
+          return;
+        }
+
+        btn.disabled = true;
+        boxes.forEach(b => b.disabled = true);
+        const wait = el('div', 'recipe-note', 'Looking for substitutes...');
+        result.appendChild(wait);
+
+        const reply = await callChat(
+          SUB_PROMPT,
+          [{ role: 'user', content: `Dish: ${recipe.dish} (serves ${recipe.servings}). Missing ingredients: ` + JSON.stringify(required.map(r => ({ name: r.name, qty: r.qty }))) }],
+          2000
+        );
+        const parsed = parseJson(reply);
+        wait.remove();
+        if (!parsed || !Array.isArray(parsed.substitutes)) {
+          result.appendChild(el('div', 'summary-box', 'I couldn\'t get substitutes this time. Try again.'));
+          btn.disabled = false;
+          boxes.forEach(b => b.disabled = false);
+          return;
+        }
+
+        const status = required.map(() => 'pending');
+        const summary = el('div', 'summary-box');
+        const updateSummary = () => {
+          const still = required.filter((_, i) => status[i] !== 'accepted').map(r => r.name);
+          summary.textContent = (still.length ? 'Still missing: ' + still.join(', ') : 'Everything is covered 🎉')
+            + (skipped.length ? ' · Skipping optional: ' + skipped.map(s => s.name).join(', ') : '');
+        };
+
+        required.forEach((item, i) => {
+          const entry = parsed.substitutes.find(s => s && typeof s.missing === 'string' && s.missing.toLowerCase() === item.name.toLowerCase()) || parsed.substitutes[i] || {};
+          const option = typeof entry.option === 'string' && entry.option.trim() ? entry.option.trim() : null;
+          const box = el('div', 'sub-item');
+          box.appendChild(el('strong', '', item.name));
+          if (option) {
+            box.appendChild(el('p', '', 'Try: ' + option));
+            if (typeof entry.how === 'string' && entry.how) box.appendChild(el('p', 'muted', entry.how));
+            if (typeof entry.effect === 'string' && entry.effect) box.appendChild(el('p', 'muted', 'Effect: ' + entry.effect));
+            const actions = el('div', 'sub-actions');
+            const accept = el('button', 'card-btn', 'Accept');
+            const reject = el('button', 'card-btn ghost', 'Reject');
+            accept.type = reject.type = 'button';
+            const note = el('div', 'sub-status');
+            accept.onclick = () => { status[i] = 'accepted'; note.textContent = '✅ Using the substitute'; updateSummary(); };
+            reject.onclick = () => { status[i] = 'rejected'; note.textContent = 'Still missing'; updateSummary(); };
+            actions.append(accept, reject);
+            box.append(actions, note);
+          } else {
+            status[i] = 'none';
+            box.appendChild(el('p', '', 'No good substitute for this one.'));
+            if (typeof entry.effect === 'string' && entry.effect) box.appendChild(el('p', 'muted', entry.effect));
+            box.appendChild(el('div', 'sub-status', 'Still missing'));
+          }
+          result.appendChild(box);
+        });
+        updateSummary();
+        result.appendChild(summary);
+      };
+    }
+
     function addMessage(role, text) {
-  const box = document.getElementById("chat-box");
-  const div = document.createElement("div");
-  div.className = `message ${role}`;
-  const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-  if (role === "user") {
-    div.innerHTML = `<div class="msg-avatar user-av" onclick="toggleAvatarPicker()" style="cursor:pointer">${userAvatar}</div><div class="msg-content"><div class="msg-bubble">${formatReply(text)}</div><div class="msg-time">${timeStr}</div></div>`;
-  } else {
-    div.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble">${formatReply(text)}</div><div class="msg-time">${timeStr}</div></div>`;
-  }
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-  return div;
-}
+      const box = document.getElementById("chat-box");
+      const div = document.createElement("div");
+      div.className = `message ${role}`;
+      const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      if (role === "user") {
+        div.innerHTML = `<div class="msg-avatar user-av" onclick="toggleAvatarPicker()" style="cursor:pointer">${userAvatar}</div><div class="msg-content"><div class="msg-bubble">${formatReply(text)}</div><div class="msg-time">${timeStr}</div></div>`;
+      } else {
+        div.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble">${formatReply(text)}</div><div class="msg-time">${timeStr}</div></div>`;
+      }
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+      return div;
+    }
 
     document.getElementById("user-input").addEventListener("keydown", (e) => {
       if (e.key === "Enter") sendMessage();
     });
 
+    // Show the command list while the input is exactly "/"
+    document.getElementById("user-input").addEventListener("input", (e) => {
+      document.getElementById('command-bar').classList.toggle('open', e.target.value === '/');
+    });
+
     function startVoice() {
       const btn = document.getElementById("mic-btn");
       const input = document.getElementById("user-input");
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRec) {
+        addMessage("assistant", "Voice input isn't supported in this browser. Try Chrome.");
+        return;
+      }
+      const recognition = new SpeechRec();
       recognition.lang = "en-IN";
       recognition.interimResults = false;
       btn.classList.add("listening");
@@ -1016,113 +1104,105 @@ speak(replyText);
       document.getElementById('sidebar').classList.remove('open');
       document.getElementById('overlay').classList.remove('open');
     }
+
     // Avatar picker
-let userAvatar = localStorage.getItem('moonbyte-avatar') || '👤';
+    let userAvatar = localStorage.getItem('moonbyte-avatar') || '👤';
 
-function initAvatar() {
-  document.querySelectorAll('.user-av').forEach(el => {
-    el.textContent = userAvatar;
-  });
-}
-
-function toggleAvatarPicker() {
-  document.getElementById('avatar-picker').classList.toggle('open');
-}
-
-function setAvatar(emoji) {
-  userAvatar = emoji;
-  localStorage.setItem('moonbyte-avatar', emoji);
-  document.querySelectorAll('.user-av').forEach(el => {
-    el.textContent = emoji;
-  });
-  document.getElementById('avatar-picker').classList.remove('open');
-}
-
-// Close picker when clicking outside
-document.addEventListener('click', (e) => {
-  const picker = document.getElementById('avatar-picker');
-  if (!e.target.closest('.user-av') && !e.target.closest('.avatar-picker')) {
-    picker.classList.remove('open');
-  }
-});
-// Command bar
-// Text to speech
-let isMuted = false;
-
-function toggleMute() {
-  isMuted = !isMuted;
-  const btn = document.getElementById('mute-btn');
-  btn.textContent = isMuted ? '🔇' : '🔊';
-  if (isMuted) window.speechSynthesis.cancel();
-}
-
-function speak(text) {
-  if (isMuted) return;
-  window.speechSynthesis.cancel();
-  const clean = text.replace(/<[^>]*>/g, '').replace(/\*\*/g, '').replace(/\*/g, '');
-  const utterance = new SpeechSynthesisUtterance(clean);
-  
-  // Pick best available voice
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v => 
-    v.name.includes('Google') || 
-    v.name.includes('Natural') ||
-    v.name.includes('Neural') ||
-    v.lang === 'en-IN'
-  ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
-  
-  if (preferred) utterance.voice = preferred;
-  utterance.lang = 'en-IN';
-  utterance.rate = 0.95;
-  utterance.pitch = 1.1;
-  window.speechSynthesis.speak(utterance);
-}
-
-// Updated runCommand with new commands
-function runCommand(cmd) {
-  const bar = document.getElementById('command-bar');
-  bar.classList.remove('open');
-  document.getElementById('user-input').value = '';
-
-  const modeCommands = ['general', 'study', 'code', 'style', 'recipe', 'ppt'];
-
-  if (cmd === 'clear') {
-    clearMemory();
-  } else if (modeCommands.includes(cmd)) {
-    const btn = document.querySelector(`.mode-btn[onclick="switchMode('${cmd}', this)"]`);
-    if (btn) switchMode(cmd, btn);
-  } else {
-    const prompts = {
-      time: 'What is the current time?',
-      weather: 'What is the weather like in Hyderabad today?',
-      motivate: 'Give me a short motivational quote for a CSE student.',
-      joke: 'Tell me a funny short joke.',
-      dbms: 'Give me a quick important DBMS concept I should know.',
-      dsa: 'Give me a quick DSA topic or tip I should practice today.',
-      outfit: 'Suggest a quick outfit for a college student in Hyderabad.',
-      help: 'List all available commands in Moonbyte with what they do.',
-    };
-       if (prompts[cmd]) {
-      document.getElementById('user-input').value = prompts[cmd];
-      sendMessage();
+    function initAvatar() {
+      document.querySelectorAll('.user-av').forEach(el => {
+        el.textContent = userAvatar;
+      });
     }
-  }
-}
 
-// Auto-focus the chat input when the user starts typing anywhere on the page
-document.addEventListener('keydown', function(e) {
-  const active = document.activeElement;
-  const isTypingElsewhere = active && (
-    active.tagName === 'INPUT' ||
-    active.tagName === 'TEXTAREA' ||
-    active.isContentEditable
-  );
-  const ignoredKeys = ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape', 'Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    function toggleAvatarPicker() {
+      document.getElementById('avatar-picker').classList.toggle('open');
+    }
 
-  if (!isTypingElsewhere && !ignoredKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
-    const input = document.getElementById('user-input');
-    if (input) input.focus();
-  }
-});
+    function setAvatar(emoji) {
+      userAvatar = emoji;
+      localStorage.setItem('moonbyte-avatar', emoji);
+      document.querySelectorAll('.user-av').forEach(el => {
+        el.textContent = emoji;
+      });
+      document.getElementById('avatar-picker').classList.remove('open');
+    }
+
+    // Close picker when clicking outside
+    document.addEventListener('click', (e) => {
+      const picker = document.getElementById('avatar-picker');
+      if (!e.target.closest('.user-av') && !e.target.closest('.avatar-picker')) {
+        picker.classList.remove('open');
+      }
+    });
+
+    // Text to speech
+    let isMuted = false;
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      const btn = document.getElementById('mute-btn');
+      btn.textContent = isMuted ? '🔇' : '🔊';
+      if (isMuted) window.speechSynthesis.cancel();
+    }
+
+    function speak(text) {
+      if (isMuted) return;
+      window.speechSynthesis.cancel();
+      const clean = text.replace(/<[^>]*>/g, '').replace(/\*\*/g, '').replace(/\*/g, '');
+      const utterance = new SpeechSynthesisUtterance(clean);
+
+      // Pick best available voice
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v =>
+        v.name.includes('Google') ||
+        v.name.includes('Natural') ||
+        v.name.includes('Neural') ||
+        v.lang === 'en-IN'
+      ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+
+      if (preferred) utterance.voice = preferred;
+      utterance.lang = 'en-IN';
+      utterance.rate = 0.95;
+      utterance.pitch = 1.1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Commands
+    function runCommand(cmd) {
+      const bar = document.getElementById('command-bar');
+      bar.classList.remove('open');
+      document.getElementById('user-input').value = '';
+
+      const modeCommands = ['recipe', 'style', 'general'];
+
+      if (cmd === 'clear') {
+        clearMemory();
+      } else if (cmd === 'help') {
+        addMessage("assistant", "Commands:\n**/recipe** Recipe mode\n**/style** Style mode\n**/general** General mode\n**/outfit** Outfit suggestion\n**/clear** Clear memory\n**/help** This list");
+      } else if (modeCommands.includes(cmd)) {
+        const btn = document.querySelector(`.mode-btn[onclick="switchMode('${cmd}', this)"]`);
+        if (btn) switchMode(cmd, btn);
+      } else if (cmd === 'outfit') {
+        document.getElementById('user-input').value = 'Suggest a quick outfit for me for today.';
+        sendMessage();
+      }
+    }
+
+    // Auto-focus the chat input when the user starts typing anywhere on the page
+    document.addEventListener('keydown', function(e) {
+      const active = document.activeElement;
+      const isTypingElsewhere = active && (
+        active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.isContentEditable
+      );
+      const ignoredKeys = ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape', 'Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+      if (!isTypingElsewhere && !ignoredKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const input = document.getElementById('user-input');
+        if (input) input.focus();
+      }
+    });
   </script>
+</body>
 </html>

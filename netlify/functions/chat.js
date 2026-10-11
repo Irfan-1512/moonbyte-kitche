@@ -1,47 +1,11 @@
-exports.handler = async function(event) {
+exports.handler = async function (event) {
   try {
-    const { messages, systemPrompt, searchQuery } = JSON.parse(event.body);
+    const { messages, systemPrompt, maxTokens } = JSON.parse(event.body || "{}");
 
-    // If it's a search request use OpenRouter
-    if (searchQuery) {
-      const searchResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "HTTP-Referer": "https://moonbyte-ai.netlify.app",
-          "X-Title": "Moonbyte"
-        },
-        body: JSON.stringify({
-          model: "openrouter/free",
-          messages: [
-            {
-              role: "user",
-              content: `Search for: ${searchQuery}. Give me a clear, concise answer in 2-3 sentences.`
-            }
-          ]
-        })
-      });
-
-      const searchData = await searchResponse.json();
-
-      if (!searchResponse.ok || !searchData.choices || !searchData.choices[0]) {
-        console.log("OpenRouter error:", JSON.stringify(searchData));
-        return {
-          statusCode: 200,
-          body: JSON.stringify({ reply: `Search failed: ${searchData.error?.message || "unknown OpenRouter error"}` })
-        };
-      }
-
-      const searchResult = searchData.choices[0].message.content;
-
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ reply: `🔍 **Search Result:**\n\n${searchResult}` })
-      };
+    if (!Array.isArray(messages) || typeof systemPrompt !== "string") {
+      return { statusCode: 400, body: JSON.stringify({ reply: "Bad request." }) };
     }
 
-    // Normal Groq response
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -52,9 +16,9 @@ exports.handler = async function(event) {
         model: "openai/gpt-oss-120b",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages
+          ...messages.slice(-20)
         ],
-        max_tokens: 1000
+        max_tokens: Math.min(Number(maxTokens) || 1000, 4000)
       })
     });
 
@@ -68,11 +32,9 @@ exports.handler = async function(event) {
       };
     }
 
-    const reply = data.choices[0].message.content;
-
     return {
       statusCode: 200,
-      body: JSON.stringify({ reply })
+      body: JSON.stringify({ reply: data.choices[0].message.content })
     };
   } catch (err) {
     console.log("Function crashed:", err);
