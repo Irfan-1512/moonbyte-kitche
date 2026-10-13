@@ -603,6 +603,18 @@
 .sub-actions { display: flex; gap: 6px; margin-top: 8px; }
 .sub-status { font-size: 12px; margin-top: 6px; color: var(--accent2); }
 .summary-box { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); font-size: 13px; }
+
+/* Cart */
+.cart-box { margin-top: 12px; }
+.demo-badge { display: inline-block; font-size: 10px; color: var(--text2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 1px 8px; margin-bottom: 6px; }
+.cart-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--glass-border); font-size: 13px; }
+.cart-info { min-width: 0; flex: 1; }
+.cart-info .muted { color: var(--text2); font-size: 12px; margin-top: 2px; }
+.qty { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.qty-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--glass); color: var(--text); cursor: pointer; font-size: 14px; }
+.qty-btn:hover { border-color: var(--accent); }
+.qty-count { min-width: 16px; text-align: center; font-size: 13px; }
+.cart-total { margin: 10px 0 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -929,6 +941,78 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
 
     const SUB_PROMPT = `You suggest cooking substitutes. Respond with a single JSON object and nothing else: {"substitutes":[{"missing":"ingredient name","option":"a substitute, or null","how":"short instruction with quantities","effect":"short note on how it changes the dish"}]}. Give one entry per missing ingredient, in the same order. If there is no good substitute, set option to null and explain in effect. Never suggest anything unsafe.`;
 
+    // ---------- Demo store ----------
+    const CURRENCY = 'USD';
+    let catalogueCache = null;
+
+    function formatMoney(n) {
+      return (CURRENCY === 'USD' ? '$' : '') + Number(n).toFixed(2);
+    }
+
+    async function loadCatalogue() {
+      if (catalogueCache) return catalogueCache;
+      try {
+        const res = await fetch('data/catalogue.json');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('bad format');
+        catalogueCache = data.filter(i => i && typeof i.id === 'string' && typeof i.name === 'string' && Number.isFinite(i.price));
+        return catalogueCache;
+      } catch (e) {
+        console.log('Catalogue failed', e);
+        return null;
+      }
+    }
+
+    function normalizeName(s) {
+      return String(s).toLowerCase()
+        .replace(/[^a-z\s]/g, ' ')
+        .replace(/\b(fresh|chopped|diced|sliced|whole|finely|large|small|medium|boneless|skinless|minced|grated|crushed)\b/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+    }
+
+    // Exact name or alias wins; otherwise the best substring match; otherwise no match.
+    function matchItem(ingredient, catalogue) {
+      const q = normalizeName(ingredient);
+      if (!q) return null;
+      let best = null, bestScore = 0;
+      for (const item of catalogue) {
+        let score = 0;
+        for (const raw of [item.name, ...(Array.isArray(item.aliases) ? item.aliases : [])]) {
+          const n = normalizeName(raw);
+          if (!n) continue;
+          let s = 0;
+          if (n === q) s = 100;
+          else if (n.includes(q) || q.includes(n)) s = 60 + Math.min(n.length, q.length);
+          if (s > score) score = s;
+        }
+        if (score > bestScore || (score === bestScore && score > 0 && best && item.name.length < best.name.length)) {
+          best = item; bestScore = score;
+        }
+      }
+      return bestScore >= 60 ? best : null;
+    }
+
+    // The PayPal sandbox payment plugs in here (create order, buyer approves, capture).
+    async function checkout(order) {
+      return {
+        status: 'not_connected',
+        message: `Order ready: ${order.items.length} item(s), total ${formatMoney(order.total)}. PayPal sandbox checkout plugs in here next.`
+      };
+    }
+
+    function saveShoppingList(dish, names) {
+      try {
+        const list = JSON.parse(localStorage.getItem('moonbyte-shopping-list') || '[]');
+        list.push({ dish, items: names, time: Date.now() });
+        localStorage.setItem('moonbyte-shopping-list', JSON.stringify(list.slice(-20)));
+        return true;
+      } catch (e) {
+        console.log('Could not save list', e);
+        return false;
+      }
+    }
+
     function renderRecipeCard(bubble, recipe) {
       const card = el('div', 'recipe-card');
       card.appendChild(el('div', 'recipe-title', `${recipe.dish} · serves ${recipe.servings}`));
@@ -949,29 +1033,130 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
       });
       card.appendChild(list);
 
-      const btn = el('button', 'card-btn', 'Find substitutes for what I\'m missing');
-      btn.type = 'button';
-      card.appendChild(btn);
+      const actions = el('div', 'sub-actions');
+      const subsBtn = el('button', 'card-btn', "Find substitutes for what I'm missing");
+      const cartBtn = el('button', 'card-btn ghost', 'Skip substitutes, add to cart');
+      subsBtn.type = cartBtn.type = 'button';
+      actions.append(subsBtn, cartBtn);
+      card.appendChild(actions);
       const result = el('div', 'recipe-result');
-      card.appendChild(result);
+      const cartBox = el('div', 'cart-box');
+      card.append(result, cartBox);
       bubble.appendChild(card);
 
-      btn.onclick = async () => {
+      const lock = on => { boxes.forEach(b => b.disabled = on); subsBtn.disabled = on; cartBtn.disabled = on; };
+
+      // Returns the required (non-optional) missing items, or null after showing a message.
+      function missingRequired() {
         const missing = recipe.ingredients.filter((_, i) => !boxes[i].checked);
         result.innerHTML = '';
+        cartBox.innerHTML = '';
         if (!missing.length) {
           result.appendChild(el('div', 'summary-box', 'You have everything. Happy cooking! 🍳'));
-          return;
+          return null;
         }
         const required = missing.filter(m => !m.optional);
-        const skipped = missing.filter(m => m.optional);
         if (!required.length) {
-          result.appendChild(el('div', 'summary-box', 'Only optional items are missing: ' + skipped.map(s => s.name).join(', ') + '. You can skip them. Happy cooking! 🍳'));
+          result.appendChild(el('div', 'summary-box', 'Only optional items are missing: ' + missing.map(s => s.name).join(', ') + '. You can skip them. Happy cooking! 🍳'));
+          return null;
+        }
+        return { required, skipped: missing.filter(m => m.optional) };
+      }
+
+      async function openCart(items) {
+        cartBox.replaceChildren(el('div', 'recipe-note', 'Checking the demo store...'));
+        const catalogue = await loadCatalogue();
+        if (!catalogue) {
+          cartBox.replaceChildren(el('div', 'summary-box', "I couldn't load the demo store. Refresh the page and try again."));
           return;
         }
+        const lines = new Map();
+        const notFound = [];
+        items.forEach(it => {
+          const m = matchItem(it.name, catalogue);
+          if (!m) { notFound.push(it.name); return; }
+          const line = lines.get(m.id) || { item: m, qty: 1, for: [] };
+          line.for.push(it.name);
+          lines.set(m.id, line);
+        });
+        drawCart(lines, notFound);
+      }
 
-        btn.disabled = true;
-        boxes.forEach(b => b.disabled = true);
+      function drawCart(lines, notFound) {
+        cartBox.replaceChildren();
+        cartBox.appendChild(el('div', 'recipe-title', 'Your cart'));
+        cartBox.appendChild(el('div', 'demo-badge', 'Demo store · sandbox payment, no real purchase'));
+        if (!lines.size) {
+          cartBox.appendChild(el('div', 'summary-box', notFound.length
+            ? 'None of these are in the demo store: ' + notFound.join(', ') + '.'
+            : 'Your cart is empty.'));
+          return;
+        }
+        lines.forEach((line, id) => {
+          const row = el('div', 'cart-row');
+          const info = el('div', 'cart-info');
+          info.appendChild(el('strong', '', line.item.name));
+          info.appendChild(el('div', 'muted', `${line.item.pack} · ${formatMoney(line.item.price)} each · for ${line.for.join(', ')}`));
+          const qty = el('div', 'qty');
+          const minus = el('button', 'qty-btn', '−');
+          const count = el('span', 'qty-count', String(line.qty));
+          const plus = el('button', 'qty-btn', '+');
+          const del = el('button', 'qty-btn', '✕');
+          minus.type = plus.type = del.type = 'button';
+          minus.setAttribute('aria-label', `Fewer ${line.item.name}`);
+          plus.setAttribute('aria-label', `More ${line.item.name}`);
+          del.setAttribute('aria-label', `Remove ${line.item.name}`);
+          minus.onclick = () => { if (line.qty > 1) { line.qty--; drawCart(lines, notFound); } };
+          plus.onclick = () => { if (line.qty < 9) { line.qty++; drawCart(lines, notFound); } };
+          del.onclick = () => { lines.delete(id); drawCart(lines, notFound); };
+          qty.append(minus, count, plus, del);
+          row.append(info, qty);
+          cartBox.appendChild(row);
+        });
+        if (notFound.length) cartBox.appendChild(el('div', 'recipe-note', 'Not in the demo store, skipped: ' + notFound.join(', ')));
+
+        const total = [...lines.values()].reduce((s, l) => s + l.item.price * l.qty, 0);
+        cartBox.appendChild(el('div', 'cart-total', 'Total: ' + formatMoney(total)));
+
+        const row = el('div', 'sub-actions');
+        const approve = el('button', 'card-btn', 'Approve and pay');
+        const save = el('button', 'card-btn ghost', 'Not now, save my list');
+        approve.type = save.type = 'button';
+        const note = el('div', 'recipe-result');
+        approve.onclick = async () => {
+          approve.disabled = save.disabled = true;
+          const order = {
+            currency: CURRENCY,
+            items: [...lines.values()].map(l => ({ id: l.item.id, name: l.item.name, pack: l.item.pack, unitPrice: l.item.price, qty: l.qty })),
+            total: Math.round(total * 100) / 100
+          };
+          const out = await checkout(order);
+          note.replaceChildren(el('div', 'summary-box', out.message));
+        };
+        save.onclick = () => {
+          approve.disabled = save.disabled = true;
+          const names = [...lines.values()].map(l => l.item.name).concat(notFound);
+          note.replaceChildren(el('div', 'summary-box', saveShoppingList(recipe.dish, names)
+            ? `Saved ${names.length} item(s) to your shopping list ✅`
+            : "I couldn't save your list on this device."));
+        };
+        row.append(approve, save);
+        cartBox.append(row, note);
+      }
+
+      cartBtn.onclick = () => {
+        const m = missingRequired();
+        if (!m) return;
+        lock(true);
+        openCart(m.required);
+      };
+
+      subsBtn.onclick = async () => {
+        const m = missingRequired();
+        if (!m) return;
+        const { required, skipped } = m;
+
+        lock(true);
         const wait = el('div', 'recipe-note', 'Looking for substitutes...');
         result.appendChild(wait);
 
@@ -983,9 +1168,8 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         const parsed = parseJson(reply);
         wait.remove();
         if (!parsed || !Array.isArray(parsed.substitutes)) {
-          result.appendChild(el('div', 'summary-box', 'I couldn\'t get substitutes this time. Try again.'));
-          btn.disabled = false;
-          boxes.forEach(b => b.disabled = false);
+          result.appendChild(el('div', 'summary-box', "I couldn't get substitutes this time. Try again, or skip straight to the cart."));
+          lock(false);
           return;
         }
 
@@ -998,23 +1182,32 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         };
 
         required.forEach((item, i) => {
-          const entry = parsed.substitutes.find(s => s && typeof s.missing === 'string' && s.missing.toLowerCase() === item.name.toLowerCase()) || parsed.substitutes[i] || {};
-          const option = typeof entry.option === 'string' && entry.option.trim() ? entry.option.trim() : null;
+          const want = normalizeName(item.name);
+          const entry = parsed.substitutes.find(s => {
+            if (!s || typeof s.missing !== 'string') return false;
+            const got = normalizeName(s.missing);
+            return got && (got === want || got.includes(want) || want.includes(got));
+          });
+          const option = entry && typeof entry.option === 'string' && entry.option.trim() ? entry.option.trim() : null;
           const box = el('div', 'sub-item');
           box.appendChild(el('strong', '', item.name));
-          if (option) {
+          if (!entry) {
+            status[i] = 'none';
+            box.appendChild(el('p', '', 'No suggestion came back for this one.'));
+            box.appendChild(el('div', 'sub-status', 'Still missing'));
+          } else if (option) {
             box.appendChild(el('p', '', 'Try: ' + option));
             if (typeof entry.how === 'string' && entry.how) box.appendChild(el('p', 'muted', entry.how));
             if (typeof entry.effect === 'string' && entry.effect) box.appendChild(el('p', 'muted', 'Effect: ' + entry.effect));
-            const actions = el('div', 'sub-actions');
+            const acts = el('div', 'sub-actions');
             const accept = el('button', 'card-btn', 'Accept');
             const reject = el('button', 'card-btn ghost', 'Reject');
             accept.type = reject.type = 'button';
-            const note = el('div', 'sub-status');
-            accept.onclick = () => { status[i] = 'accepted'; note.textContent = '✅ Using the substitute'; updateSummary(); };
-            reject.onclick = () => { status[i] = 'rejected'; note.textContent = 'Still missing'; updateSummary(); };
-            actions.append(accept, reject);
-            box.append(actions, note);
+            const status2 = el('div', 'sub-status');
+            accept.onclick = () => { status[i] = 'accepted'; status2.textContent = '✅ Using the substitute'; updateSummary(); };
+            reject.onclick = () => { status[i] = 'rejected'; status2.textContent = 'Still missing'; updateSummary(); };
+            acts.append(accept, reject);
+            box.append(acts, status2);
           } else {
             status[i] = 'none';
             box.appendChild(el('p', '', 'No good substitute for this one.'));
@@ -1025,6 +1218,20 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         });
         updateSummary();
         result.appendChild(summary);
+
+        const toCartRow = el('div', 'sub-actions');
+        const toCart = el('button', 'card-btn', 'Add still-missing items to cart');
+        toCart.type = 'button';
+        toCart.onclick = () => {
+          const still = required.filter((_, i) => status[i] !== 'accepted');
+          if (!still.length) {
+            cartBox.replaceChildren(el('div', 'summary-box', 'Nothing to buy, everything is covered 🎉'));
+            return;
+          }
+          openCart(still);
+        };
+        toCartRow.appendChild(toCart);
+        result.appendChild(toCartRow);
       };
     }
 

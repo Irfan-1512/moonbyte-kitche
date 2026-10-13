@@ -1,0 +1,792 @@
+[
+ {
+  "id": "chicken",
+  "name": "Chicken",
+  "aliases": [
+   "chicken breast",
+   "chicken thigh",
+   "boneless chicken"
+  ],
+  "pack": "500 g",
+  "price": 4.5,
+  "category": "meat"
+ },
+ {
+  "id": "eggs",
+  "name": "Eggs",
+  "aliases": [
+   "egg"
+  ],
+  "pack": "6 pack",
+  "price": 1.8,
+  "category": "dairy"
+ },
+ {
+  "id": "paneer",
+  "name": "Paneer",
+  "aliases": [
+   "cottage cheese"
+  ],
+  "pack": "200 g",
+  "price": 2.2,
+  "category": "dairy"
+ },
+ {
+  "id": "milk",
+  "name": "Milk",
+  "aliases": [
+   "whole milk"
+  ],
+  "pack": "1 L",
+  "price": 1.1,
+  "category": "dairy"
+ },
+ {
+  "id": "curd",
+  "name": "Curd",
+  "aliases": [
+   "yogurt",
+   "yoghurt",
+   "dahi",
+   "plain yogurt"
+  ],
+  "pack": "400 g",
+  "price": 1.0,
+  "category": "dairy"
+ },
+ {
+  "id": "buttermilk",
+  "name": "Buttermilk",
+  "aliases": [
+   "chaas"
+  ],
+  "pack": "500 ml",
+  "price": 0.9,
+  "category": "dairy"
+ },
+ {
+  "id": "butter",
+  "name": "Butter",
+  "aliases": [
+   "unsalted butter",
+   "salted butter"
+  ],
+  "pack": "100 g",
+  "price": 1.6,
+  "category": "dairy"
+ },
+ {
+  "id": "ghee",
+  "name": "Ghee",
+  "aliases": [
+   "clarified butter"
+  ],
+  "pack": "200 g",
+  "price": 3.4,
+  "category": "dairy"
+ },
+ {
+  "id": "cream",
+  "name": "Fresh cream",
+  "aliases": [
+   "heavy cream",
+   "cooking cream",
+   "whipping cream"
+  ],
+  "pack": "200 ml",
+  "price": 1.5,
+  "category": "dairy"
+ },
+ {
+  "id": "mozzarella",
+  "name": "Mozzarella cheese",
+  "aliases": [
+   "mozzarella",
+   "pizza cheese"
+  ],
+  "pack": "200 g",
+  "price": 2.8,
+  "category": "dairy"
+ },
+ {
+  "id": "cheddar",
+  "name": "Cheddar cheese",
+  "aliases": [
+   "cheddar",
+   "cheese"
+  ],
+  "pack": "200 g",
+  "price": 2.6,
+  "category": "dairy"
+ },
+ {
+  "id": "basmati",
+  "name": "Basmati rice",
+  "aliases": [
+   "rice",
+   "long grain rice"
+  ],
+  "pack": "1 kg",
+  "price": 3.2,
+  "category": "grains"
+ },
+ {
+  "id": "atta",
+  "name": "Wheat flour (atta)",
+  "aliases": [
+   "atta",
+   "whole wheat flour",
+   "wheat flour"
+  ],
+  "pack": "1 kg",
+  "price": 1.4,
+  "category": "grains"
+ },
+ {
+  "id": "maida",
+  "name": "All-purpose flour (maida)",
+  "aliases": [
+   "maida",
+   "all purpose flour",
+   "plain flour",
+   "flour"
+  ],
+  "pack": "500 g",
+  "price": 0.9,
+  "category": "grains"
+ },
+ {
+  "id": "besan",
+  "name": "Gram flour (besan)",
+  "aliases": [
+   "besan",
+   "chickpea flour"
+  ],
+  "pack": "500 g",
+  "price": 1.3,
+  "category": "grains"
+ },
+ {
+  "id": "pasta",
+  "name": "Pasta",
+  "aliases": [
+   "penne",
+   "spaghetti",
+   "macaroni"
+  ],
+  "pack": "500 g",
+  "price": 1.7,
+  "category": "grains"
+ },
+ {
+  "id": "noodles",
+  "name": "Noodles",
+  "aliases": [
+   "egg noodles",
+   "instant noodles"
+  ],
+  "pack": "400 g",
+  "price": 1.2,
+  "category": "grains"
+ },
+ {
+  "id": "bread",
+  "name": "Bread",
+  "aliases": [
+   "bread slices",
+   "burger buns"
+  ],
+  "pack": "400 g",
+  "price": 1.1,
+  "category": "grains"
+ },
+ {
+  "id": "toor",
+  "name": "Toor dal",
+  "aliases": [
+   "toor dal",
+   "arhar dal",
+   "pigeon peas",
+   "lentils",
+   "dal"
+  ],
+  "pack": "500 g",
+  "price": 1.9,
+  "category": "pulses"
+ },
+ {
+  "id": "chana",
+  "name": "Chickpeas",
+  "aliases": [
+   "chana",
+   "kabuli chana",
+   "garbanzo beans"
+  ],
+  "pack": "500 g",
+  "price": 1.6,
+  "category": "pulses"
+ },
+ {
+  "id": "rajma",
+  "name": "Kidney beans (rajma)",
+  "aliases": [
+   "rajma",
+   "kidney beans"
+  ],
+  "pack": "500 g",
+  "price": 1.8,
+  "category": "pulses"
+ },
+ {
+  "id": "onion",
+  "name": "Onion",
+  "aliases": [
+   "red onion",
+   "white onion"
+  ],
+  "pack": "1 kg",
+  "price": 1.2,
+  "category": "vegetables"
+ },
+ {
+  "id": "tomato",
+  "name": "Tomato",
+  "aliases": [
+   "tomatoes"
+  ],
+  "pack": "500 g",
+  "price": 0.9,
+  "category": "vegetables"
+ },
+ {
+  "id": "potato",
+  "name": "Potato",
+  "aliases": [
+   "potatoes",
+   "aloo"
+  ],
+  "pack": "1 kg",
+  "price": 1.0,
+  "category": "vegetables"
+ },
+ {
+  "id": "garlic",
+  "name": "Garlic",
+  "aliases": [
+   "garlic cloves"
+  ],
+  "pack": "100 g",
+  "price": 0.8,
+  "category": "vegetables"
+ },
+ {
+  "id": "ginger",
+  "name": "Ginger",
+  "aliases": [
+   "ginger root"
+  ],
+  "pack": "100 g",
+  "price": 0.7,
+  "category": "vegetables"
+ },
+ {
+  "id": "gingergarlic",
+  "name": "Ginger garlic paste",
+  "aliases": [
+   "garlic paste",
+   "ginger paste",
+   "ginger-garlic paste"
+  ],
+  "pack": "200 g",
+  "price": 1.1,
+  "category": "vegetables"
+ },
+ {
+  "id": "greenchilli",
+  "name": "Green chilli",
+  "aliases": [
+   "green chillies",
+   "green chili",
+   "chilli",
+   "chili"
+  ],
+  "pack": "100 g",
+  "price": 0.6,
+  "category": "vegetables"
+ },
+ {
+  "id": "capsicum",
+  "name": "Capsicum",
+  "aliases": [
+   "bell pepper",
+   "green pepper",
+   "bell peppers"
+  ],
+  "pack": "250 g",
+  "price": 1.0,
+  "category": "vegetables"
+ },
+ {
+  "id": "carrot",
+  "name": "Carrot",
+  "aliases": [
+   "carrots"
+  ],
+  "pack": "500 g",
+  "price": 0.9,
+  "category": "vegetables"
+ },
+ {
+  "id": "peas",
+  "name": "Green peas",
+  "aliases": [
+   "peas",
+   "matar"
+  ],
+  "pack": "250 g",
+  "price": 1.1,
+  "category": "vegetables"
+ },
+ {
+  "id": "spinach",
+  "name": "Spinach",
+  "aliases": [
+   "palak"
+  ],
+  "pack": "250 g",
+  "price": 0.8,
+  "category": "vegetables"
+ },
+ {
+  "id": "cauliflower",
+  "name": "Cauliflower",
+  "aliases": [
+   "gobi"
+  ],
+  "pack": "1 piece",
+  "price": 1.2,
+  "category": "vegetables"
+ },
+ {
+  "id": "cabbage",
+  "name": "Cabbage",
+  "aliases": [],
+  "pack": "1 piece",
+  "price": 1.0,
+  "category": "vegetables"
+ },
+ {
+  "id": "cucumber",
+  "name": "Cucumber",
+  "aliases": [],
+  "pack": "500 g",
+  "price": 0.8,
+  "category": "vegetables"
+ },
+ {
+  "id": "beans",
+  "name": "Green beans",
+  "aliases": [
+   "french beans"
+  ],
+  "pack": "250 g",
+  "price": 1.0,
+  "category": "vegetables"
+ },
+ {
+  "id": "mushroom",
+  "name": "Mushrooms",
+  "aliases": [
+   "mushroom",
+   "button mushrooms"
+  ],
+  "pack": "200 g",
+  "price": 1.6,
+  "category": "vegetables"
+ },
+ {
+  "id": "corianderleaves",
+  "name": "Coriander leaves",
+  "aliases": [
+   "cilantro",
+   "fresh coriander",
+   "coriander",
+   "dhania leaves"
+  ],
+  "pack": "1 bunch",
+  "price": 0.5,
+  "category": "herbs"
+ },
+ {
+  "id": "mint",
+  "name": "Mint leaves",
+  "aliases": [
+   "mint",
+   "pudina"
+  ],
+  "pack": "1 bunch",
+  "price": 0.5,
+  "category": "herbs"
+ },
+ {
+  "id": "curryleaves",
+  "name": "Curry leaves",
+  "aliases": [
+   "curry leaf"
+  ],
+  "pack": "1 bunch",
+  "price": 0.4,
+  "category": "herbs"
+ },
+ {
+  "id": "lemon",
+  "name": "Lemon",
+  "aliases": [
+   "lemon juice",
+   "lime",
+   "lime juice"
+  ],
+  "pack": "4 pieces",
+  "price": 0.8,
+  "category": "fruit"
+ },
+ {
+  "id": "salt",
+  "name": "Salt",
+  "aliases": [
+   "table salt"
+  ],
+  "pack": "1 kg",
+  "price": 0.5,
+  "category": "spices"
+ },
+ {
+  "id": "sugar",
+  "name": "Sugar",
+  "aliases": [
+   "white sugar",
+   "caster sugar"
+  ],
+  "pack": "1 kg",
+  "price": 0.9,
+  "category": "spices"
+ },
+ {
+  "id": "turmeric",
+  "name": "Turmeric powder",
+  "aliases": [
+   "turmeric",
+   "haldi"
+  ],
+  "pack": "100 g",
+  "price": 0.9,
+  "category": "spices"
+ },
+ {
+  "id": "redchilli",
+  "name": "Red chilli powder",
+  "aliases": [
+   "chilli powder",
+   "chili powder",
+   "red chili powder",
+   "kashmiri chilli powder"
+  ],
+  "pack": "100 g",
+  "price": 1.0,
+  "category": "spices"
+ },
+ {
+  "id": "corianderpowder",
+  "name": "Coriander powder",
+  "aliases": [
+   "dhania powder",
+   "ground coriander"
+  ],
+  "pack": "100 g",
+  "price": 0.9,
+  "category": "spices"
+ },
+ {
+  "id": "cuminpowder",
+  "name": "Cumin powder",
+  "aliases": [
+   "jeera powder",
+   "ground cumin"
+  ],
+  "pack": "100 g",
+  "price": 1.0,
+  "category": "spices"
+ },
+ {
+  "id": "cuminseeds",
+  "name": "Cumin seeds",
+  "aliases": [
+   "jeera",
+   "cumin"
+  ],
+  "pack": "100 g",
+  "price": 1.1,
+  "category": "spices"
+ },
+ {
+  "id": "garammasala",
+  "name": "Garam masala",
+  "aliases": [
+   "masala"
+  ],
+  "pack": "100 g",
+  "price": 1.4,
+  "category": "spices"
+ },
+ {
+  "id": "kasuri",
+  "name": "Kasuri methi",
+  "aliases": [
+   "dried fenugreek leaves",
+   "fenugreek leaves",
+   "kasoori methi"
+  ],
+  "pack": "25 g",
+  "price": 0.7,
+  "category": "spices"
+ },
+ {
+  "id": "cardamom",
+  "name": "Cardamom",
+  "aliases": [
+   "elaichi",
+   "green cardamom"
+  ],
+  "pack": "25 g",
+  "price": 2.1,
+  "category": "spices"
+ },
+ {
+  "id": "cloves",
+  "name": "Cloves",
+  "aliases": [
+   "laung"
+  ],
+  "pack": "25 g",
+  "price": 1.2,
+  "category": "spices"
+ },
+ {
+  "id": "cinnamon",
+  "name": "Cinnamon",
+  "aliases": [
+   "dalchini",
+   "cinnamon stick"
+  ],
+  "pack": "50 g",
+  "price": 1.1,
+  "category": "spices"
+ },
+ {
+  "id": "bayleaf",
+  "name": "Bay leaf",
+  "aliases": [
+   "bay leaves",
+   "tej patta"
+  ],
+  "pack": "20 g",
+  "price": 0.6,
+  "category": "spices"
+ },
+ {
+  "id": "blackpepper",
+  "name": "Black pepper",
+  "aliases": [
+   "pepper",
+   "peppercorns"
+  ],
+  "pack": "50 g",
+  "price": 1.5,
+  "category": "spices"
+ },
+ {
+  "id": "mustard",
+  "name": "Mustard seeds",
+  "aliases": [
+   "mustard",
+   "rai"
+  ],
+  "pack": "100 g",
+  "price": 0.8,
+  "category": "spices"
+ },
+ {
+  "id": "saffron",
+  "name": "Saffron",
+  "aliases": [
+   "kesar"
+  ],
+  "pack": "1 g",
+  "price": 4.5,
+  "category": "spices"
+ },
+ {
+  "id": "oil",
+  "name": "Cooking oil",
+  "aliases": [
+   "oil",
+   "vegetable oil",
+   "sunflower oil"
+  ],
+  "pack": "1 L",
+  "price": 2.4,
+  "category": "pantry"
+ },
+ {
+  "id": "oliveoil",
+  "name": "Olive oil",
+  "aliases": [],
+  "pack": "250 ml",
+  "price": 3.9,
+  "category": "pantry"
+ },
+ {
+  "id": "tomatopuree",
+  "name": "Tomato puree",
+  "aliases": [
+   "tomato paste",
+   "tomato sauce"
+  ],
+  "pack": "200 g",
+  "price": 1.0,
+  "category": "pantry"
+ },
+ {
+  "id": "pizzasauce",
+  "name": "Pizza sauce",
+  "aliases": [],
+  "pack": "200 g",
+  "price": 1.3,
+  "category": "pantry"
+ },
+ {
+  "id": "soysauce",
+  "name": "Soy sauce",
+  "aliases": [
+   "soya sauce"
+  ],
+  "pack": "200 ml",
+  "price": 1.2,
+  "category": "pantry"
+ },
+ {
+  "id": "vinegar",
+  "name": "Vinegar",
+  "aliases": [
+   "white vinegar"
+  ],
+  "pack": "250 ml",
+  "price": 0.8,
+  "category": "pantry"
+ },
+ {
+  "id": "coconutmilk",
+  "name": "Coconut milk",
+  "aliases": [],
+  "pack": "400 ml",
+  "price": 1.8,
+  "category": "pantry"
+ },
+ {
+  "id": "stockcubes",
+  "name": "Chicken stock cubes",
+  "aliases": [
+   "stock cubes",
+   "bouillon",
+   "chicken stock"
+  ],
+  "pack": "6 cubes",
+  "price": 1.2,
+  "category": "pantry"
+ },
+ {
+  "id": "bakingpowder",
+  "name": "Baking powder",
+  "aliases": [],
+  "pack": "100 g",
+  "price": 1.0,
+  "category": "baking"
+ },
+ {
+  "id": "bakingsoda",
+  "name": "Baking soda",
+  "aliases": [
+   "sodium bicarbonate"
+  ],
+  "pack": "100 g",
+  "price": 0.7,
+  "category": "baking"
+ },
+ {
+  "id": "vanilla",
+  "name": "Vanilla extract",
+  "aliases": [
+   "vanilla essence"
+  ],
+  "pack": "50 ml",
+  "price": 2.4,
+  "category": "baking"
+ },
+ {
+  "id": "cocoa",
+  "name": "Cocoa powder",
+  "aliases": [
+   "cacao powder"
+  ],
+  "pack": "100 g",
+  "price": 2.2,
+  "category": "baking"
+ },
+ {
+  "id": "honey",
+  "name": "Honey",
+  "aliases": [],
+  "pack": "250 g",
+  "price": 2.5,
+  "category": "pantry"
+ },
+ {
+  "id": "cashews",
+  "name": "Cashews",
+  "aliases": [
+   "cashew nuts",
+   "cashew"
+  ],
+  "pack": "100 g",
+  "price": 2.6,
+  "category": "dryfruit"
+ },
+ {
+  "id": "almonds",
+  "name": "Almonds",
+  "aliases": [
+   "badam"
+  ],
+  "pack": "100 g",
+  "price": 2.8,
+  "category": "dryfruit"
+ },
+ {
+  "id": "raisins",
+  "name": "Raisins",
+  "aliases": [
+   "kishmish"
+  ],
+  "pack": "100 g",
+  "price": 1.3,
+  "category": "dryfruit"
+ },
+ {
+  "id": "tofu",
+  "name": "Tofu",
+  "aliases": [],
+  "pack": "250 g",
+  "price": 1.9,
+  "category": "dairy"
+ }
+]
