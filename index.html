@@ -604,6 +604,10 @@
 .sub-status { font-size: 12px; margin-top: 6px; color: var(--accent2); }
 .summary-box { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); font-size: 13px; }
 
+/* Steps */
+.steps-box { margin: 4px 0 12px; padding: 8px 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); font-size: 13px; }
+.steps-box summary { cursor: pointer; font-weight: 500; color: var(--accent2); }
+.steps-box ol { margin: 8px 0 2px 18px; display: flex; flex-direction: column; gap: 6px; }
 /* Cart */
 .cart-box { margin-top: 12px; }
 .demo-badge { display: inline-block; font-size: 10px; color: var(--text2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 1px 8px; margin-bottom: 6px; }
@@ -724,9 +728,9 @@
 
     const modes = {
       recipe: `You are Moonbyte in Recipe Mode, a friendly kitchen companion. ALWAYS respond with a single JSON object and nothing else (no markdown fences, no text outside the JSON). There are two shapes:
-1) When the user asks for a dish or recipe: {"type":"recipe","dish":"dish name","servings":4,"ingredients":[{"name":"chicken","qty":"500 g","optional":false}]}
-List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to-haves as optional true. Use the servings the user gives, otherwise 2.
-2) For anything else (questions, thanks, small talk): {"type":"chat","reply":"a short, warm, casual answer"}`,
+1) When the user asks for a dish or recipe: {"type":"recipe","dish":"dish name","servings":4,"ingredients":[{"name":"chicken","qty":"500 g","optional":false}],"steps":["Short first step.","Short second step."]}
+List the ingredients (at most 20) and short cooking steps (at most 10, one sentence each). Mark garnishes and nice-to-haves as optional true. Use the servings the user gives, otherwise 2.
+2) For anything else (questions, thanks, small talk, or a request for the steps or method of a dish already shown): {"type":"chat","reply":"a short, warm, casual answer"}. When asked for steps, put them in reply as a short numbered list with \\n between lines.`,
 
       style: `You are Moonbyte in Style Mode, a friendly personal fashion advisor. Give practical outfit advice for everyday life and special occasions. Be real, casual and helpful.`,
 
@@ -847,7 +851,7 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         const reply = await callChat(
           systemPrompt + `\n\nCURRENT TIME RIGHT NOW: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}. When user asks for time or date, directly tell them this exact time.`,
           conversationHistory.slice(-10),
-          currentMode === 'recipe' ? 2000 : 1000
+          currentMode === 'recipe' ? 3000 : 1000
         );
 
         let shown = reply || "Something went wrong. Try again!";
@@ -862,7 +866,8 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         }
 
         const historyText = recipe
-          ? `[Showed a checklist for ${recipe.dish}, serves ${recipe.servings}: ` + recipe.ingredients.map(i => `${i.qty} ${i.name}`.trim()).join(', ') + `]`
+          ? `[Showed a checklist for ${recipe.dish}, serves ${recipe.servings}: ` + recipe.ingredients.map(i => `${i.qty} ${i.name}`.trim()).join(', ')
+            + (recipe.steps.length ? `. Steps: ` + recipe.steps.map((s, i) => `${i + 1}) ${s}`).join(' ') : '') + `]`
           : shown;
         conversationHistory.push({ role: "assistant", content: historyText });
         if (conversationHistory.length > 100) conversationHistory.splice(0, conversationHistory.length - 100);
@@ -929,7 +934,8 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         .map(i => ({ name: i.name.trim(), qty: typeof i.qty === 'string' ? i.qty.trim() : '', optional: i.optional === true }));
       if (!ingredients.length) return null;
       const servings = Number.isFinite(Number(p.servings)) && Number(p.servings) > 0 ? Number(p.servings) : 2;
-      return { dish: p.dish.trim(), servings, ingredients };
+      const steps = Array.isArray(p.steps) ? p.steps.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim()).slice(0, 12) : [];
+      return { dish: p.dish.trim(), servings, ingredients, steps };
     }
 
     function el(tag, cls, text) {
@@ -1032,6 +1038,16 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         return box;
       });
       card.appendChild(list);
+
+      if (recipe.steps.length) {
+        const details = document.createElement('details');
+        details.className = 'steps-box';
+        details.appendChild(el('summary', '', 'Cooking steps'));
+        const ol = document.createElement('ol');
+        recipe.steps.forEach(s => ol.appendChild(el('li', '', s)));
+        details.appendChild(ol);
+        card.appendChild(details);
+      }
 
       const actions = el('div', 'sub-actions');
       const subsBtn = el('button', 'card-btn', "Find substitutes for what I'm missing");
