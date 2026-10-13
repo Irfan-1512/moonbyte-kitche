@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-mode="recipe">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +14,7 @@
       --accent: #9394a5;
       --accent2: #c4c5d6;
       --accent-glow: rgba(147,148,165,0.25);
+      --accent-soft: rgba(147,148,165,0.15);
       --text: #e8e8f0;
       --text2: #7a7a8a;
       --user-bg: linear-gradient(135deg, #6b6c7e, #9394a5);
@@ -29,12 +30,35 @@
       --accent: #6b6c7e;
       --accent2: #4a4b5e;
       --accent-glow: rgba(107,108,126,0.2);
+      --accent-soft: rgba(107,108,126,0.15);
       --text: #1a1a22;
       --text2: #6a6a7a;
       --user-bg: linear-gradient(135deg, #6b6c7e, #9394a5);
       --ai-bg: rgba(255,255,255,0.8);
       --ai-border: rgba(147,148,165,0.15);
       --input-bg: rgba(255,255,255,0.8);
+    }
+
+    /* Per-mode looks (General keeps the default moon theme) */
+    :root[data-theme="dark"][data-mode="recipe"] {
+      --bg: #0e0a07; --accent: #d99a4e; --accent2: #f0c27a;
+      --accent-glow: rgba(217,154,78,0.22); --accent-soft: rgba(217,154,78,0.15);
+      --user-bg: linear-gradient(135deg, #a8672a, #d99a4e);
+    }
+    :root[data-theme="light"][data-mode="recipe"] {
+      --bg: #f8f1e6; --accent: #a8672a; --accent2: #7a4a1f;
+      --accent-glow: rgba(168,103,42,0.2); --accent-soft: rgba(168,103,42,0.12);
+      --user-bg: linear-gradient(135deg, #a8672a, #d99a4e);
+    }
+    :root[data-theme="dark"][data-mode="style"] {
+      --bg: #070a14; --accent: #c0506a; --accent2: #e48fa2;
+      --accent-glow: rgba(192,80,106,0.22); --accent-soft: rgba(192,80,106,0.15);
+      --user-bg: linear-gradient(135deg, #7a2a42, #b34a66);
+    }
+    :root[data-theme="light"][data-mode="style"] {
+      --bg: #eceff6; --accent: #7a2a42; --accent2: #5a1e30;
+      --accent-glow: rgba(122,42,66,0.18); --accent-soft: rgba(122,42,66,0.12);
+      --user-bg: linear-gradient(135deg, #7a2a42, #b34a66);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -141,7 +165,7 @@
     }
 
     .chat-history-item:hover { background: var(--glass-hover); color: var(--text); }
-    .chat-history-item.active { background: rgba(147,148,165,0.15); color: var(--accent2); }
+    .chat-history-item.active { background: var(--accent-soft); color: var(--accent2); }
 
     .sidebar-bottom {
       padding: 16px 20px;
@@ -277,7 +301,7 @@
     }
 
     .mode-btn:hover { border-color: var(--accent); color: var(--accent2); }
-    .mode-btn.active { background: rgba(147,148,165,0.15); border-color: var(--accent); color: var(--accent2); }
+    .mode-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent2); }
 
     #chat-box {
       flex: 1;
@@ -319,7 +343,7 @@
     }
 
     .msg-avatar.ai-av {
-      background: linear-gradient(135deg, #6b6c7e, #9394a5);
+      background: var(--user-bg);
       box-shadow: 0 0 10px var(--accent-glow);
     }
 
@@ -593,7 +617,7 @@
 .ing-row label { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 6px 4px; cursor: pointer; }
 .ing-row input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
 .ing-tag { font-size: 10px; color: var(--text2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 1px 7px; }
-.card-btn { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--accent); background: rgba(147,148,165,0.15); color: var(--accent2); cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; font-weight: 500; }
+.card-btn { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent2); cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; font-weight: 500; }
 .card-btn:hover { background: var(--glass-hover); }
 .card-btn:disabled { opacity: 0.5; cursor: default; }
 .card-btn.ghost { background: transparent; border-color: var(--glass-border); color: var(--text2); }
@@ -604,6 +628,18 @@
 .sub-status { font-size: 12px; margin-top: 6px; color: var(--accent2); }
 .summary-box { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); font-size: 13px; }
 
+/* Start-screen chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: -4px 0 4px 42px; }
+.chip { padding: 8px 14px; border-radius: 20px; border: 1px solid var(--glass-border); background: var(--glass); color: var(--text); cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; }
+.chip:hover { border-color: var(--accent); color: var(--accent2); background: var(--accent-soft); }
+/* Step timers */
+.steps-box li { display: flex; flex-direction: column; gap: 6px; }
+.timer { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.timer-time { font-family: 'Space Grotesk', sans-serif; font-variant-numeric: tabular-nums; font-weight: 600; min-width: 64px; color: var(--accent2); }
+.timer-btn { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent2); cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; }
+.timer-btn.ghost { background: transparent; border-color: var(--glass-border); color: var(--text2); }
+.timer-btn:disabled { opacity: 0.5; cursor: default; }
+.timer.done .timer-time { color: #22c55e; }
 /* Steps */
 .steps-box { margin: 4px 0 12px; padding: 8px 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); font-size: 13px; }
 .steps-box summary { cursor: pointer; font-weight: 500; color: var(--accent2); }
@@ -728,8 +764,8 @@
 
     const modes = {
       recipe: `You are Moonbyte in Recipe Mode, a friendly kitchen companion. ALWAYS respond with a single JSON object and nothing else (no markdown fences, no text outside the JSON). There are two shapes:
-1) When the user asks for a dish or recipe: {"type":"recipe","dish":"dish name","servings":4,"ingredients":[{"name":"chicken","qty":"500 g","optional":false}],"steps":["Short first step.","Short second step."]}
-List the ingredients (at most 20) and short cooking steps (at most 10, one sentence each). Mark garnishes and nice-to-haves as optional true. Use the servings the user gives, otherwise 2.
+1) When the user asks for a dish or recipe: {"type":"recipe","dish":"dish name","servings":4,"ingredients":[{"name":"chicken","qty":"500 g","optional":false}],"steps":[{"text":"Short first step.","minutes":null},{"text":"Simmer the sauce.","minutes":10}]}
+List the ingredients (at most 20) and short cooking steps (at most 10, one sentence each). Give minutes only for a step with a clear waiting or cooking time (a whole number from 1 to 240), otherwise null. Mark garnishes and nice-to-haves as optional true. Use the servings the user gives, otherwise 2.
 2) For anything else (questions, thanks, small talk, or a request for the steps or method of a dish already shown): {"type":"chat","reply":"a short, warm, casual answer"}. When asked for steps, put them in reply as a short numbered list with \\n between lines.`,
 
       style: `You are Moonbyte in Style Mode, a friendly personal fashion advisor. Give practical outfit advice for everyday life and special occasions. Be real, casual and helpful.`,
@@ -739,6 +775,33 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
 
     let currentMode = "recipe";
     let systemPrompt = modes.recipe;
+
+    const MODE_ICON = { recipe: '🍳', style: '👔', general: '🌙' };
+    const MODE_PLACEHOLDER = { recipe: 'What are we cooking today?', style: "What's the occasion?", general: 'Ask me anything...' };
+    const MODE_START = {
+      recipe: { text: "🍳 Recipe Mode ON! Tell me what you want to cook, or what ingredients you have.", chips: ['Butter chicken for 4', 'Veg biryani for 3', 'Pasta for 2', 'Paneer tikka for 4'] },
+      style: { text: "👔 Style Mode ON! Let's talk fashion. What's the occasion?", chips: ['Outfit for a job interview', 'Casual weekend look', 'What to wear to a wedding', 'Colours that go with navy'] },
+      general: { text: "Hey! 🌙 General mode. What's on your mind?", chips: ['Give me a quick dinner idea', 'How do I store fresh herbs?', 'What can you do?'] }
+    };
+
+    function aiIcon() { return MODE_ICON[currentMode] || '🌙'; }
+
+    function applyModeLook(mode) {
+      document.documentElement.setAttribute('data-mode', mode);
+      document.getElementById('user-input').placeholder = MODE_PLACEHOLDER[mode];
+    }
+
+    function showStart(mode) {
+      addMessage('assistant', MODE_START[mode].text);
+      const row = el('div', 'chips');
+      MODE_START[mode].chips.forEach(c => {
+        const b = el('button', 'chip', c);
+        b.type = 'button';
+        b.onclick = () => { document.getElementById('user-input').value = c; sendMessage(); };
+        row.appendChild(b);
+      });
+      document.getElementById('chat-box').appendChild(row);
+    }
 
     function renderChatHistory() {
       const container = document.getElementById('chat-history');
@@ -775,7 +838,7 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
         });
         addMessage("assistant", "Welcome back! 🌙 I remember our last conversation.");
       } else {
-        addMessage("assistant", "Hey! 🌙 Moonbyte Kitchen is online. Tell me what you want to cook, or what's in your kitchen.");
+        showStart(currentMode);
       }
       renderChatHistory();
     };
@@ -793,12 +856,8 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
       btn.classList.add('active');
       document.getElementById('mode-title').textContent = btn.textContent.trim();
       document.getElementById('chat-box').innerHTML = '';
-      const welcomes = {
-        recipe: "🍳 Recipe Mode ON! Tell me what you want to cook, or what ingredients you have.",
-        style: "👔 Style Mode ON! Let's talk fashion. What's the occasion?",
-        general: "Hey! 🌙 Switched to General mode. What's on your mind?"
-      };
-      addMessage("assistant", welcomes[mode]);
+      applyModeLook(mode);
+      showStart(mode);
       conversationHistory.length = 0;
       localStorage.removeItem('moonbyte-history');
       renderChatHistory();
@@ -829,6 +888,7 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
         return;
       }
 
+      document.querySelectorAll('.chips').forEach(c => c.remove());
       addMessage("user", userText);
       input.value = "";
       document.getElementById('command-bar').classList.remove('open');
@@ -845,7 +905,7 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
 
       conversationHistory.push({ role: "user", content: processedText });
       const thinkingDiv = addMessage("thinking", "");
-      thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
+      thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">${aiIcon()}</div><div class="msg-content"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
 
       try {
         const reply = await callChat(
@@ -867,14 +927,14 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
 
         const historyText = recipe
           ? `[Showed a checklist for ${recipe.dish}, serves ${recipe.servings}: ` + recipe.ingredients.map(i => `${i.qty} ${i.name}`.trim()).join(', ')
-            + (recipe.steps.length ? `. Steps: ` + recipe.steps.map((s, i) => `${i + 1}) ${s}`).join(' ') : '') + `]`
+            + (recipe.steps.length ? `. Steps: ` + recipe.steps.map((s, i) => `${i + 1}) ${s.text}${s.minutes ? ` (${s.minutes} min)` : ''}`).join(' ') : '') + `]`
           : shown;
         conversationHistory.push({ role: "assistant", content: historyText });
         if (conversationHistory.length > 100) conversationHistory.splice(0, conversationHistory.length - 100);
         localStorage.setItem('moonbyte-history', JSON.stringify(conversationHistory));
 
         thinkingDiv.className = "message assistant";
-        thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble"></div></div>`;
+        thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">${aiIcon()}</div><div class="msg-content"><div class="msg-bubble"></div></div>`;
         const bubble = thinkingDiv.querySelector('.msg-bubble');
         if (recipe) {
           renderRecipeCard(bubble, recipe);
@@ -885,7 +945,7 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
         }
       } catch (error) {
         thinkingDiv.className = "message assistant";
-        thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble">Something went wrong. Try again!</div></div>`;
+        thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">${aiIcon()}</div><div class="msg-content"><div class="msg-bubble">Something went wrong. Try again!</div></div>`;
       }
 
       btn.disabled = false;
@@ -934,7 +994,11 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
         .map(i => ({ name: i.name.trim(), qty: typeof i.qty === 'string' ? i.qty.trim() : '', optional: i.optional === true }));
       if (!ingredients.length) return null;
       const servings = Number.isFinite(Number(p.servings)) && Number(p.servings) > 0 ? Number(p.servings) : 2;
-      const steps = Array.isArray(p.steps) ? p.steps.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim()).slice(0, 12) : [];
+      const steps = Array.isArray(p.steps) ? p.steps.map(x => {
+        const text = typeof x === 'string' ? x : (x && typeof x.text === 'string' ? x.text : '');
+        const m = x && typeof x === 'object' ? Number(x.minutes) : NaN;
+        return { text: text.trim(), minutes: Number.isFinite(m) && m >= 1 && m <= 240 ? Math.round(m) : null };
+      }).filter(x => x.text).slice(0, 12) : [];
       return { dish: p.dish.trim(), servings, ingredients, steps };
     }
 
@@ -1019,6 +1083,77 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
       }
     }
 
+    // ---------- Step timers ----------
+    let audioCtx = null;
+
+    function beep() {
+      if (isMuted) return;
+      try {
+        if (audioCtx) {
+          const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.frequency.value = 880;
+          gain.gain.value = 0.2;
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.7);
+        }
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      } catch (e) { console.log('Beep failed', e); }
+    }
+
+    function formatClock(sec) {
+      return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+    }
+
+    function createTimer(minutes, label) {
+      const total = minutes * 60;
+      let left = total, endAt = 0, id = null;
+      const wrap = el('div', 'timer');
+      const clock = el('span', 'timer-time', formatClock(left));
+      clock.setAttribute('role', 'timer');
+      const toggle = el('button', 'timer-btn', 'Start');
+      const reset = el('button', 'timer-btn ghost', 'Reset');
+      toggle.type = reset.type = 'button';
+      toggle.setAttribute('aria-label', `Start or pause the timer for ${label}`);
+      reset.setAttribute('aria-label', `Reset the timer for ${label}`);
+
+      const stop = () => { clearInterval(id); id = null; };
+      const tick = () => {
+        if (!clock.isConnected) { stop(); return; }
+        left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+        clock.textContent = formatClock(left);
+        if (left === 0) {
+          stop();
+          wrap.classList.add('done');
+          clock.textContent = "Time's up!";
+          toggle.disabled = true;
+          toggle.textContent = 'Done';
+          beep();
+        }
+      };
+      toggle.onclick = () => {
+        if (id) { stop(); toggle.textContent = 'Resume'; return; }
+        if (!audioCtx) {
+          try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audioCtx = null; }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        endAt = Date.now() + left * 1000;
+        id = setInterval(tick, 250);
+        toggle.textContent = 'Pause';
+      };
+      reset.onclick = () => {
+        stop();
+        left = total;
+        wrap.classList.remove('done');
+        clock.textContent = formatClock(left);
+        toggle.disabled = false;
+        toggle.textContent = 'Start';
+      };
+      wrap.append(clock, toggle, reset);
+      return wrap;
+    }
+
     function renderRecipeCard(bubble, recipe) {
       const card = el('div', 'recipe-card');
       card.appendChild(el('div', 'recipe-title', `${recipe.dish} · serves ${recipe.servings}`));
@@ -1044,7 +1179,12 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
         details.className = 'steps-box';
         details.appendChild(el('summary', '', 'Cooking steps'));
         const ol = document.createElement('ol');
-        recipe.steps.forEach(s => ol.appendChild(el('li', '', s)));
+        recipe.steps.forEach((s, i) => {
+          const li = document.createElement('li');
+          li.appendChild(el('span', '', s.text + (s.minutes ? ` (${s.minutes} min)` : '')));
+          if (s.minutes) li.appendChild(createTimer(s.minutes, `step ${i + 1}`));
+          ol.appendChild(li);
+        });
         details.appendChild(ol);
         card.appendChild(details);
       }
@@ -1269,7 +1409,7 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
       if (role === "user") {
         div.innerHTML = `<div class="msg-avatar user-av" onclick="toggleAvatarPicker()" style="cursor:pointer">${userAvatar}</div><div class="msg-content"><div class="msg-bubble">${formatReply(text)}</div><div class="msg-time">${timeStr}</div></div>`;
       } else {
-        div.innerHTML = `<div class="msg-avatar ai-av">🌙</div><div class="msg-content"><div class="msg-bubble">${formatReply(text)}</div><div class="msg-time">${timeStr}</div></div>`;
+        div.innerHTML = `<div class="msg-avatar ai-av">${aiIcon()}</div><div class="msg-content"><div class="msg-bubble">${formatReply(text)}</div><div class="msg-time">${timeStr}</div></div>`;
       }
       box.appendChild(div);
       box.scrollTop = box.scrollHeight;
