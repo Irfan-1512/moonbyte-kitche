@@ -939,7 +939,7 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
       return node;
     }
 
-    const SUB_PROMPT = `You suggest cooking substitutes. Respond with a single JSON object and nothing else: {"substitutes":[{"missing":"ingredient name","option":"a substitute, or null","how":"short instruction with quantities","effect":"short note on how it changes the dish"}]}. Give one entry per missing ingredient, in the same order. If there is no good substitute, set option to null and explain in effect. Never suggest anything unsafe.`;
+    const SUB_PROMPT = `You suggest cooking substitutes. Respond with a single JSON object and nothing else: {"substitutes":[{"missing":"ingredient name","option":"a substitute, or null","how":"short instruction with quantities","effect":"short note on how it changes the dish"}]}. Give one entry per missing ingredient, in the same order. If there is no good substitute, set option to null and explain in effect. Never suggest the same ingredient under another name. For basic staples such as salt, sugar, water or cooking oil, set option to null and say in effect that it is cheap and easy to buy. Never suggest anything unsafe.`;
 
     // ---------- Demo store ----------
     const CURRENCY = 'USD';
@@ -1044,6 +1044,10 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
       card.append(result, cartBox);
       bubble.appendChild(card);
 
+      const qtyMemory = new Map();
+      const removed = new Set();
+      let cartOpen = false;
+
       const lock = on => { boxes.forEach(b => b.disabled = on); subsBtn.disabled = on; cartBtn.disabled = on; };
 
       // Returns the required (non-optional) missing items, or null after showing a message.
@@ -1064,7 +1068,8 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
       }
 
       async function openCart(items) {
-        cartBox.replaceChildren(el('div', 'recipe-note', 'Checking the demo store...'));
+        cartOpen = true;
+        if (!catalogueCache) cartBox.replaceChildren(el('div', 'recipe-note', 'Checking the demo store...'));
         const catalogue = await loadCatalogue();
         if (!catalogue) {
           cartBox.replaceChildren(el('div', 'summary-box', "I couldn't load the demo store. Refresh the page and try again."));
@@ -1075,7 +1080,8 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         items.forEach(it => {
           const m = matchItem(it.name, catalogue);
           if (!m) { notFound.push(it.name); return; }
-          const line = lines.get(m.id) || { item: m, qty: 1, for: [] };
+          if (removed.has(m.id)) return;
+          const line = lines.get(m.id) || { item: m, qty: qtyMemory.get(m.id) || 1, for: [] };
           line.for.push(it.name);
           lines.set(m.id, line);
         });
@@ -1106,9 +1112,9 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
           minus.setAttribute('aria-label', `Fewer ${line.item.name}`);
           plus.setAttribute('aria-label', `More ${line.item.name}`);
           del.setAttribute('aria-label', `Remove ${line.item.name}`);
-          minus.onclick = () => { if (line.qty > 1) { line.qty--; drawCart(lines, notFound); } };
-          plus.onclick = () => { if (line.qty < 9) { line.qty++; drawCart(lines, notFound); } };
-          del.onclick = () => { lines.delete(id); drawCart(lines, notFound); };
+          minus.onclick = () => { if (line.qty > 1) { line.qty--; qtyMemory.set(id, line.qty); drawCart(lines, notFound); } };
+          plus.onclick = () => { if (line.qty < 9) { line.qty++; qtyMemory.set(id, line.qty); drawCart(lines, notFound); } };
+          del.onclick = () => { removed.add(id); lines.delete(id); drawCart(lines, notFound); };
           qty.append(minus, count, plus, del);
           row.append(info, qty);
           cartBox.appendChild(row);
@@ -1175,10 +1181,18 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
 
         const status = required.map(() => 'pending');
         const summary = el('div', 'summary-box');
+        const stillMissing = () => required.filter((_, i) => status[i] !== 'accepted');
         const updateSummary = () => {
-          const still = required.filter((_, i) => status[i] !== 'accepted').map(r => r.name);
+          const still = stillMissing().map(r => r.name);
           summary.textContent = (still.length ? 'Still missing: ' + still.join(', ') : 'Everything is covered 🎉')
             + (skipped.length ? ' · Skipping optional: ' + skipped.map(s => s.name).join(', ') : '');
+        };
+        const refresh = () => {
+          updateSummary();
+          if (!cartOpen) return;
+          const still = stillMissing();
+          if (!still.length) cartBox.replaceChildren(el('div', 'summary-box', 'Nothing to buy, everything is covered 🎉'));
+          else openCart(still);
         };
 
         required.forEach((item, i) => {
@@ -1204,8 +1218,8 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
             const reject = el('button', 'card-btn ghost', 'Reject');
             accept.type = reject.type = 'button';
             const status2 = el('div', 'sub-status');
-            accept.onclick = () => { status[i] = 'accepted'; status2.textContent = '✅ Using the substitute'; updateSummary(); };
-            reject.onclick = () => { status[i] = 'rejected'; status2.textContent = 'Still missing'; updateSummary(); };
+            accept.onclick = () => { status[i] = 'accepted'; status2.textContent = '✅ Using the substitute'; refresh(); };
+            reject.onclick = () => { status[i] = 'rejected'; status2.textContent = 'Still missing'; refresh(); };
             acts.append(accept, reject);
             box.append(acts, status2);
           } else {
@@ -1223,12 +1237,8 @@ List only ingredients (at most 20), no cooking steps. Mark garnishes and nice-to
         const toCart = el('button', 'card-btn', 'Add still-missing items to cart');
         toCart.type = 'button';
         toCart.onclick = () => {
-          const still = required.filter((_, i) => status[i] !== 'accepted');
-          if (!still.length) {
-            cartBox.replaceChildren(el('div', 'summary-box', 'Nothing to buy, everything is covered 🎉'));
-            return;
-          }
-          openCart(still);
+          cartOpen = true;
+          refresh();
         };
         toCartRow.appendChild(toCart);
         result.appendChild(toCartRow);
