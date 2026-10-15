@@ -611,6 +611,18 @@
 }
 
 /* Recipe card */
+.cart-count { display: inline-block; min-width: 16px; margin-left: 3px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: #fff; font-size: 11px; line-height: 16px; text-align: center; }
+.cart-count[hidden] { display: none; }
+.cart-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.5); display: flex; align-items: flex-start; justify-content: center; padding: 56px 12px 12px; overflow-y: auto; }
+.cart-overlay[hidden] { display: none; }
+.cart-panel { width: 100%; max-width: 440px; background: var(--bg); color: var(--text); border: 1px solid var(--glass-border); border-radius: 16px; padding: 14px 16px 16px; }
+.cart-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cart-panel h3 { font-family: 'Space Grotesk', sans-serif; font-size: 15px; margin: 12px 0 6px; }
+.order-card { border: 1px solid var(--glass-border); border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; }
+.order-status { color: var(--accent2); font-weight: 500; margin-top: 4px; }
+.dish-photo { width: 100%; height: 150px; border-radius: 12px; margin-bottom: 8px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 44px; overflow: hidden; }
+.dish-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-credit { font-size: 11px; opacity: 0.6; margin: -4px 0 8px; }
 .recipe-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 4px; }
 .recipe-hint { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
 .ing-list { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
@@ -693,6 +705,7 @@
         <span class="header-title" id="mode-title">🍳 Recipe</span>
       </div>
       <div class="header-right">
+        <button class="icon-btn" onclick="openCartPanel()" id="cart-btn" aria-label="See in cart">🛒<span class="cart-count" id="cart-count" hidden>0</span></button>
         <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
         <button class="icon-btn" onclick="toggleMute()" id="mute-btn">🔊</button>
         <button class="icon-btn" onclick="clearMemory()">🗑️</button>
@@ -703,6 +716,16 @@
       <button class="mode-btn active" onclick="switchMode('recipe', this)">🍳 Recipe</button>
       <button class="mode-btn" onclick="switchMode('style', this)">👔 Style</button>
       <button class="mode-btn" onclick="switchMode('general', this)">💬 General</button>
+    </div>
+
+    <div class="cart-overlay" id="cart-overlay" hidden>
+      <div class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-panel-title">
+        <div class="cart-panel-head">
+          <strong id="cart-panel-title">Cart and orders</strong>
+          <button type="button" class="card-btn ghost" id="cart-close">Close</button>
+        </div>
+        <div id="cart-panel-body"></div>
+      </div>
     </div>
 
     <div id="chat-box"></div>
@@ -1188,8 +1211,119 @@
       return wrap;
     }
 
+    // ---------- See in cart: current cart and past orders ----------
+    let liveCart = null; // { dish, lines } pointing at the cart currently open on screen
+
+    function setLiveCart(dish, lines) {
+      liveCart = lines && lines.size ? { dish, lines } : null;
+      const count = liveCart ? [...liveCart.lines.values()].reduce((s, l) => s + l.qty, 0) : 0;
+      const badge = document.getElementById('cart-count');
+      badge.textContent = String(count);
+      badge.hidden = count === 0;
+    }
+
+    // Simulated only: moves forward with time so the demo shows a status. Nothing is delivered.
+    function deliveryStatus(time) {
+      const mins = (Date.now() - time) / 60000;
+      if (mins < 1) return 'Order confirmed';
+      if (mins < 2) return 'Packing your items';
+      if (mins < 3) return 'Out for delivery';
+      return 'Delivered';
+    }
+
+    function readOrders() {
+      try { return JSON.parse(localStorage.getItem('moonbyte-orders') || '[]'); } catch (e) { return []; }
+    }
+
+    function renderCartPanel() {
+      const body = document.getElementById('cart-panel-body');
+      body.replaceChildren();
+
+      body.appendChild(el('h3', '', 'In your cart now'));
+      if (!liveCart) {
+        body.appendChild(el('div', 'muted', 'Your cart is empty. Ask for a dish and add items to start.'));
+      } else {
+        body.appendChild(el('div', 'muted', 'For ' + liveCart.dish + '. Change amounts on the recipe card.'));
+        let total = 0;
+        liveCart.lines.forEach(l => {
+          total += l.item.price * l.qty;
+          body.appendChild(el('div', '', `${l.qty} × ${l.item.name} (${l.item.pack}) · ${formatMoney(l.item.price * l.qty)}`));
+        });
+        body.appendChild(el('div', 'cart-total', 'Total: ' + formatMoney(total)));
+      }
+
+      body.appendChild(el('h3', '', 'Your orders'));
+      body.appendChild(el('div', 'demo-badge', 'Demo store · sandbox payments, nothing real is delivered'));
+      const orders = readOrders().slice().reverse();
+      if (!orders.length) {
+        body.appendChild(el('div', 'muted', 'No orders yet.'));
+        return;
+      }
+      orders.forEach(o => {
+        const card = el('div', 'order-card');
+        card.appendChild(el('strong', '', new Date(o.time).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) + ' · ' + formatMoney(o.amount)));
+        (Array.isArray(o.items) ? o.items : []).forEach(i => card.appendChild(el('div', '', `${i.qty} × ${i.name} (${i.pack})`)));
+        card.appendChild(el('div', 'order-status', 'Delivery status (simulated): ' + deliveryStatus(o.time)));
+        body.appendChild(card);
+      });
+    }
+
+    function openCartPanel() {
+      renderCartPanel();
+      document.getElementById('cart-overlay').hidden = false;
+      document.getElementById('cart-close').focus();
+    }
+    function closeCartPanel() {
+      document.getElementById('cart-overlay').hidden = true;
+      document.getElementById('cart-btn').focus();
+    }
+    document.getElementById('cart-close').onclick = closeCartPanel;
+    document.getElementById('cart-overlay').addEventListener('click', e => { if (e.target.id === 'cart-overlay') closeCartPanel(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('cart-overlay').hidden) closeCartPanel(); });
+
+    // ---------- Dish photos (TheMealDB, looked up by the dish-photo function) ----------
+    const photoCache = new Map();
+
+    async function findDishPhoto(dish) {
+      const key = normalizeName(dish);
+      if (photoCache.has(key)) return photoCache.get(key);
+      let found = null;
+      try {
+        const res = await fetch('/.netlify/functions/dish-photo?dish=' + encodeURIComponent(dish));
+        const data = await res.json();
+        if (typeof data.url === 'string') {
+          const u = new URL(data.url);
+          const okHost = h => u.hostname === h || u.hostname.endsWith('.' + h);
+          if (u.protocol === 'https:' && (okHost('themealdb.com') || okHost('wikimedia.org'))) {
+            found = { url: u.href, source: data.source === 'Wikipedia' ? 'Wikipedia' : 'TheMealDB' };
+          }
+        }
+      } catch (e) { console.log('Photo lookup failed', e); }
+      photoCache.set(key, found);
+      return found;
+    }
+
+    function addDishPhoto(card, dish) {
+      const box = el('div', 'dish-photo', '🍽️');
+      box.setAttribute('role', 'img');
+      box.setAttribute('aria-label', 'Photo of ' + dish + ' (loading)');
+      card.appendChild(box);
+      findDishPhoto(dish).then(found => {
+        if (!found) { box.setAttribute('aria-label', 'No photo found for ' + dish); return; }
+        const img = document.createElement('img');
+        img.alt = dish;
+        img.onload = () => {
+          box.replaceChildren(img);
+          box.setAttribute('aria-label', 'Photo of ' + dish);
+          card.insertBefore(el('div', 'photo-credit', 'Photo: ' + found.source), box.nextSibling);
+        };
+        img.src = found.url;
+      });
+    }
+
     function renderRecipeCard(bubble, recipe) {
       const card = el('div', 'recipe-card');
+      addDishPhoto(card, recipe.dish);
       card.appendChild(el('div', 'recipe-title', `${recipe.dish} · serves ${recipe.servings}`));
       card.appendChild(el('div', 'recipe-hint', 'Tick what you already have.'));
 
@@ -1282,6 +1416,7 @@
         cartBox.replaceChildren();
         cartBox.appendChild(el('div', 'recipe-title', 'Your cart'));
         cartBox.appendChild(el('div', 'demo-badge', 'Demo store · sandbox payment, no real purchase'));
+        setLiveCart(recipe.dish, lines);
         if (!lines.size) {
           cartBox.appendChild(el('div', 'summary-box', notFound.length
             ? 'None of these are in the demo store: ' + notFound.join(', ') + '.'
@@ -1336,6 +1471,8 @@
             order.items.forEach(i => done.appendChild(el('div', '', `${i.qty} × ${i.name} (${i.pack})`)));
             done.appendChild(el('div', '', 'Total paid: ' + formatMoney(out.amount || order.total)));
             done.appendChild(el('div', 'muted', 'Demo store: this was a test payment. Nothing real was bought or delivered.'));
+            done.appendChild(el('div', 'order-status', 'Delivery status (simulated): ' + deliveryStatus(Date.now()) + '. Track it under 🛒.'));
+            setLiveCart(null);
             cartBox.replaceChildren(el('div', 'recipe-title', 'Order confirmed'), done);
           });
         };
@@ -1390,7 +1527,7 @@
           updateSummary();
           if (!cartOpen) return;
           const still = stillMissing();
-          if (!still.length) cartBox.replaceChildren(el('div', 'summary-box', 'Nothing to buy, everything is covered 🎉'));
+          if (!still.length) { setLiveCart(null); cartBox.replaceChildren(el('div', 'summary-box', 'Nothing to buy, everything is covered 🎉')); }
           else openCart(still);
         };
 
