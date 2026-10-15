@@ -1063,12 +1063,63 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
       return bestScore >= 60 ? best : null;
     }
 
-    // The PayPal sandbox payment plugs in here (create order, buyer approves, capture).
-    async function checkout(order) {
-      return {
-        status: 'not_connected',
-        message: `Order ready: ${order.items.length} item(s), total ${formatMoney(order.total)}. PayPal sandbox checkout plugs in here next.`
-      };
+    // ---------- PayPal sandbox checkout ----------
+    // The Client ID is public by design. The Secret never goes in this file.
+    const PAYPAL_CLIENT_ID = 'BAATd2dqhuSA7ILPRzcq0C3vxWJc6GtaEtqwa_bzdS-PjqeyiCY4EhyV0LfD2dAWy5Zvkkw9A_LXjmTtcc';
+
+    function loadPayPal() {
+      if (window.paypal) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(PAYPAL_CLIENT_ID)}&currency=${CURRENCY}&intent=capture`;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('PayPal could not load. Check your connection.'));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function postJson(url, body) {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Request failed (' + res.status + ')');
+      return data;
+    }
+
+    function saveOrder(order, paypalId, amount) {
+      try {
+        const list = JSON.parse(localStorage.getItem('moonbyte-orders') || '[]');
+        list.push({ paypalId, amount, items: order.items, time: Date.now() });
+        localStorage.setItem('moonbyte-orders', JSON.stringify(list.slice(-20)));
+      } catch (e) { console.log('Could not save order', e); }
+    }
+
+    // Shows the PayPal button inside `box`. Calls onDone({ ok, message, amount }) when finished.
+    // Nothing is paid until the buyer approves in the PayPal window; the server takes the payment.
+    async function checkout(order, box, onDone) {
+      if (!PAYPAL_CLIENT_ID || PAYPAL_CLIENT_ID.startsWith('PASTE')) {
+        onDone({ ok: false, message: 'PayPal is not set up yet: add the sandbox Client ID in index.html.' });
+        return;
+      }
+      try { await loadPayPal(); } catch (e) { onDone({ ok: false, message: e.message }); return; }
+      box.replaceChildren();
+      window.paypal.Buttons({
+        createOrder: async () => {
+          const r = await postJson('/.netlify/functions/create-order', { items: order.items.map(i => ({ id: i.id, qty: i.qty })) });
+          return r.id;
+        },
+        onApprove: async (data) => {
+          try {
+            const r = await postJson('/.netlify/functions/capture-order', { orderID: data.orderID });
+            if (r.status !== 'COMPLETED') throw new Error('Payment status: ' + r.status);
+            saveOrder(order, r.id, r.amount);
+            onDone({ ok: true, amount: r.amount });
+          } catch (e) {
+            onDone({ ok: false, message: 'The payment could not be completed (' + e.message + '). Check your PayPal sandbox activity before trying again.' });
+          }
+        },
+        onCancel: () => onDone({ ok: false, message: 'Payment cancelled. Your cart is unchanged.' }),
+        onError: () => onDone({ ok: false, message: "Couldn't start the PayPal payment. Nothing was charged. Try again." })
+      }).render(box);
     }
 
     function saveShoppingList(dish, names) {
@@ -1285,15 +1336,25 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
         const save = el('button', 'card-btn ghost', 'Not now, save my list');
         approve.type = save.type = 'button';
         const note = el('div', 'recipe-result');
-        approve.onclick = async () => {
+        approve.onclick = () => {
           approve.disabled = save.disabled = true;
           const order = {
             currency: CURRENCY,
             items: [...lines.values()].map(l => ({ id: l.item.id, name: l.item.name, pack: l.item.pack, unitPrice: l.item.price, qty: l.qty })),
             total: Math.round(total * 100) / 100
           };
-          const out = await checkout(order);
-          note.replaceChildren(el('div', 'summary-box', out.message));
+          const msg = el('div', 'recipe-note', 'Pay with the PayPal sandbox button below (test money only).');
+          const payBox = el('div', 'pay-box');
+          note.replaceChildren(msg, payBox);
+          checkout(order, payBox, (out) => {
+            if (!out.ok) { msg.textContent = out.message; return; }
+            const done = el('div', 'summary-box');
+            done.appendChild(el('strong', '', 'Payment complete ✅ (PayPal sandbox)'));
+            order.items.forEach(i => done.appendChild(el('div', '', `${i.qty} × ${i.name} (${i.pack})`)));
+            done.appendChild(el('div', '', 'Total paid: ' + formatMoney(out.amount || order.total)));
+            done.appendChild(el('div', 'muted', 'Demo store: this was a test payment. Nothing real was bought or delivered.'));
+            cartBox.replaceChildren(el('div', 'recipe-title', 'Order confirmed'), done);
+          });
         };
         save.onclick = () => {
           approve.disabled = save.disabled = true;
