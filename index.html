@@ -762,19 +762,8 @@
     const conversationHistory = JSON.parse(localStorage.getItem('moonbyte-history')) || [];
     let chatSessions = JSON.parse(localStorage.getItem('moonbyte-sessions')) || [];
 
-    const modes = {
-      recipe: `You are Moonbyte in Recipe Mode, a friendly kitchen companion. ALWAYS respond with a single JSON object and nothing else (no markdown fences, no text outside the JSON). There are two shapes:
-1) When the user asks for a dish or recipe: {"type":"recipe","dish":"dish name","servings":4,"ingredients":[{"name":"chicken","qty":"500 g","optional":false}],"steps":[{"text":"Short first step.","minutes":null},{"text":"Simmer the sauce.","minutes":10}]}
-List the ingredients (at most 20) and short cooking steps (at most 10, one sentence each). Give minutes only for a step with a clear waiting or cooking time (a whole number from 1 to 240), otherwise null. Mark garnishes and nice-to-haves as optional true. Use the servings the user gives, otherwise 2.
-2) For anything else (questions, thanks, small talk, or a request for the steps or method of a dish already shown): {"type":"chat","reply":"a short, warm, casual answer"}. When asked for steps, put them in reply as a short numbered list with \\n between lines.`,
-
-      style: `You are Moonbyte in Style Mode, a friendly personal fashion advisor. Give practical outfit advice for everyday life and special occasions. Be real, casual and helpful.`,
-
-      general: `You are Moonbyte, a friendly AI kitchen companion. Talk like a close friend: casual, warm, real. Never sound robotic or formal. Keep messages short, with no bullet points unless necessary.`
-    };
 
     let currentMode = "recipe";
-    let systemPrompt = modes.recipe;
 
     const MODE_ICON = { recipe: '🍳', style: '👔', general: '🌙' };
     const MODE_PLACEHOLDER = { recipe: 'What are we cooking today?', style: "What's the occasion?", general: 'Ask me anything...' };
@@ -851,7 +840,6 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
         localStorage.setItem('moonbyte-sessions', JSON.stringify(chatSessions));
       }
       currentMode = mode;
-      systemPrompt = modes[mode];
       document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('mode-title').textContent = btn.textContent.trim();
@@ -908,11 +896,7 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
       thinkingDiv.innerHTML = `<div class="msg-avatar ai-av">${aiIcon()}</div><div class="msg-content"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
 
       try {
-        const reply = await callChat(
-          systemPrompt + `\n\nCURRENT TIME RIGHT NOW: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}. When user asks for time or date, directly tell them this exact time.`,
-          conversationHistory.slice(-10),
-          currentMode === 'recipe' ? 3000 : 1000
-        );
+        const reply = await callChat(currentMode, conversationHistory.slice(-10));
 
         let shown = reply || "Something went wrong. Try again!";
         let recipe = null;
@@ -964,12 +948,13 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
 
 
     // ---------- Recipe flow ----------
-    async function callChat(sys, msgs, maxTokens = 1000) {
+    // Only a mode name and the messages go to the server; the instructions live in chat.js.
+    async function callChat(mode, msgs) {
       try {
         const res = await fetch("/.netlify/functions/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: msgs, systemPrompt: sys, searchQuery: null, maxTokens })
+          body: JSON.stringify({ mode, messages: msgs })
         });
         const data = await res.json();
         return data.reply || null;
@@ -1008,8 +993,6 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
       if (text !== undefined) node.textContent = text;
       return node;
     }
-
-    const SUB_PROMPT = `You suggest cooking substitutes. Respond with a single JSON object and nothing else: {"substitutes":[{"missing":"ingredient name","option":"a substitute, or null","how":"short instruction with quantities","effect":"short note on how it changes the dish"}]}. Give one entry per missing ingredient, in the same order. If there is no good substitute, set option to null and explain in effect. Never suggest the same ingredient under another name. For basic staples such as salt, sugar, water or cooking oil, set option to null and say in effect that it is cheap and easy to buy. Never suggest anything unsafe.`;
 
     // ---------- Demo store ----------
     const CURRENCY = 'USD';
@@ -1065,7 +1048,7 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
 
     // ---------- PayPal sandbox checkout ----------
     // The Client ID is public by design. The Secret never goes in this file.
-    const PAYPAL_CLIENT_ID = 'BAATd2dqhuSA7ILPRzcq0C3vxWJc6GtaEtqwa_bzdS-PjqeyiCY4EhyV0LfD2dAWy5Zvkkw9A_LXjmTtcc';
+    const PAYPAL_CLIENT_ID = 'PASTE_YOUR_SANDBOX_CLIENT_ID_HERE';
 
     function loadPayPal() {
       if (window.paypal) return Promise.resolve();
@@ -1384,9 +1367,8 @@ List the ingredients (at most 20) and short cooking steps (at most 10, one sente
         result.appendChild(wait);
 
         const reply = await callChat(
-          SUB_PROMPT,
-          [{ role: 'user', content: `Dish: ${recipe.dish} (serves ${recipe.servings}). Missing ingredients: ` + JSON.stringify(required.map(r => ({ name: r.name, qty: r.qty }))) }],
-          2000
+          'substitutes',
+          [{ role: 'user', content: `Dish: ${recipe.dish} (serves ${recipe.servings}). Missing ingredients: ` + JSON.stringify(required.map(r => ({ name: r.name, qty: r.qty }))) }]
         );
         const parsed = parseJson(reply);
         wait.remove();
