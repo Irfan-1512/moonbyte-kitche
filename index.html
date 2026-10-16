@@ -164,6 +164,10 @@
       text-overflow: ellipsis;
     }
 
+    .chat-history-item { display: flex; align-items: center; gap: 2px; }
+    .chat-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hist-btn { background: none; border: none; cursor: pointer; font-size: 12px; padding: 2px 4px; opacity: 0.55; color: inherit; flex-shrink: 0; }
+    .hist-btn:hover, .hist-btn:focus-visible, .hist-btn.on { opacity: 1; }
     .chat-history-item:hover { background: var(--glass-hover); color: var(--text); }
     .chat-history-item.active { background: var(--accent-soft); color: var(--accent2); }
 
@@ -636,6 +640,9 @@
 .sub-item { border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 12px; margin-top: 8px; font-size: 13px; }
 .sub-item p { margin-top: 4px; }
 .sub-item .muted, .recipe-note { color: var(--text2); font-size: 12px; }
+.diet-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 13px; }
+.diet-opt { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.diet-opt input { width: 16px; height: 16px; accent-color: var(--accent); }
 .sub-actions { display: flex; gap: 6px; margin-top: 8px; }
 .sub-status { font-size: 12px; margin-top: 6px; color: var(--accent2); }
 .summary-box { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); font-size: 13px; }
@@ -679,7 +686,7 @@
       <span class="sidebar-logo-text">Moonbyte Kitchen</span>
     </div>
     <div class="sidebar-section">
-      <button class="new-chat-btn" onclick="clearMemory()">✚ New Chat</button>
+      <button class="new-chat-btn" onclick="newChat()">✚ New Chat</button>
       <div class="sidebar-label">Recent</div>
       <div id="chat-history"></div>
     </div>
@@ -708,7 +715,7 @@
         <button class="icon-btn" onclick="openCartPanel()" id="cart-btn" aria-label="See in cart">🛒<span class="cart-count" id="cart-count" hidden>0</span></button>
         <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
         <button class="icon-btn" onclick="toggleMute()" id="mute-btn">🔊</button>
-        <button class="icon-btn" onclick="clearMemory()">🗑️</button>
+        <button class="icon-btn" onclick="deleteCurrentChat()" aria-label="Delete this chat permanently" title="Delete this chat permanently">🗑️</button>
       </div>
     </div>
 
@@ -815,20 +822,112 @@
       document.getElementById('chat-box').appendChild(row);
     }
 
+    // ---------- Chat history: save, load, pin, delete ----------
+    const newId = () => 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    chatSessions.forEach(s => { if (!s.id) s.id = newId(); });
+    let currentSessionId = localStorage.getItem('moonbyte-current-id') || null;
+
+    function saveSessions() { localStorage.setItem('moonbyte-sessions', JSON.stringify(chatSessions)); }
+
+    function setCurrentSession(id) {
+      currentSessionId = id;
+      if (id) localStorage.setItem('moonbyte-current-id', id);
+      else localStorage.removeItem('moonbyte-current-id');
+    }
+
+    // Saves the chat on screen into history (updates it if it was opened from history).
+    function archiveCurrent() {
+      if (!conversationHistory.length) return;
+      const existing = currentSessionId && chatSessions.find(s => s.id === currentSessionId);
+      if (existing) {
+        existing.messages = [...conversationHistory];
+        existing.time = Date.now();
+      } else {
+        const firstMsg = conversationHistory.find(m => m.role === 'user');
+        const title = firstMsg ? firstMsg.content.slice(0, 30) + '...' : 'Conversation';
+        chatSessions.push({ id: newId(), title, time: Date.now(), messages: [...conversationHistory], pinned: false });
+      }
+      saveSessions();
+    }
+
+    function resetChat() {
+      localStorage.removeItem('moonbyte-history');
+      conversationHistory.length = 0;
+      setCurrentSession(null);
+      document.getElementById('chat-box').innerHTML = '';
+      showStart(currentMode);
+    }
+
+    // New Chat: keeps the old chat in history.
+    function newChat() {
+      archiveCurrent();
+      resetChat();
+      renderChatHistory();
+    }
+
+    // Dustbin: deletes the chat on screen for good (also from history).
+    function deleteCurrentChat() {
+      if (!conversationHistory.length && !currentSessionId) { resetChat(); return; }
+      if (!confirm("Delete this chat permanently? This can't be undone.")) return;
+      if (currentSessionId) chatSessions = chatSessions.filter(s => s.id !== currentSessionId);
+      saveSessions();
+      resetChat();
+      renderChatHistory();
+    }
+
+    function deleteSession(id) {
+      if (!confirm("Delete this chat permanently? This can't be undone.")) return;
+      chatSessions = chatSessions.filter(s => s.id !== id);
+      saveSessions();
+      if (id === currentSessionId) resetChat();
+      renderChatHistory();
+    }
+
+    function togglePin(id) {
+      const s = chatSessions.find(x => x.id === id);
+      if (!s) return;
+      s.pinned = !s.pinned;
+      saveSessions();
+      renderChatHistory();
+    }
+
     function renderChatHistory() {
       const container = document.getElementById('chat-history');
       container.innerHTML = '';
-      chatSessions.slice(-8).reverse().forEach((session, i) => {
-        const div = document.createElement('div');
-        div.className = 'chat-history-item' + (i === 0 ? ' active' : '');
-        div.textContent = session.title || 'Conversation';
-        div.style.cursor = 'pointer';
-        div.onclick = () => loadSession(session);
-        container.appendChild(div);
+      const pinned = chatSessions.filter(s => s.pinned).reverse();
+      const recent = chatSessions.filter(s => !s.pinned).slice(-8).reverse();
+      [...pinned, ...recent].forEach(session => {
+        const row = document.createElement('div');
+        row.className = 'chat-history-item' + (session.id === currentSessionId ? ' active' : '');
+
+        const title = document.createElement('span');
+        title.className = 'chat-title';
+        title.textContent = (session.pinned ? '📌 ' : '') + (session.title || 'Conversation');
+        title.onclick = () => loadSession(session);
+
+        const pin = document.createElement('button');
+        pin.type = 'button';
+        pin.className = 'hist-btn' + (session.pinned ? ' on' : '');
+        pin.textContent = '📌';
+        pin.setAttribute('aria-label', session.pinned ? 'Unpin chat' : 'Pin chat');
+        pin.title = session.pinned ? 'Unpin chat' : 'Pin chat';
+        pin.onclick = () => togglePin(session.id);
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'hist-btn';
+        del.textContent = '🗑️';
+        del.setAttribute('aria-label', 'Delete chat permanently');
+        del.title = 'Delete chat permanently';
+        del.onclick = () => deleteSession(session.id);
+
+        row.append(title, pin, del);
+        container.appendChild(row);
       });
     }
 
     function loadSession(session) {
+      if (session.id !== currentSessionId) archiveCurrent(); // don't lose the chat on screen
       document.getElementById('chat-box').innerHTML = '';
       conversationHistory.length = 0;
       (session.messages || []).forEach(msg => {
@@ -836,6 +935,8 @@
         addMessage(msg.role === "user" ? "user" : "assistant", msg.content);
       });
       localStorage.setItem('moonbyte-history', JSON.stringify(conversationHistory));
+      setCurrentSession(session.id);
+      renderChatHistory();
     }
 
     window.onload = () => {
@@ -856,12 +957,7 @@
     };
 
     function switchMode(mode, btn) {
-      if (conversationHistory.length > 0) {
-        const firstMsg = conversationHistory.find(m => m.role === 'user');
-        const title = firstMsg ? firstMsg.content.slice(0, 30) + '...' : 'Conversation';
-        chatSessions.push({ title, time: Date.now(), messages: [...conversationHistory] });
-        localStorage.setItem('moonbyte-sessions', JSON.stringify(chatSessions));
-      }
+      archiveCurrent();
       currentMode = mode;
       document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
@@ -871,21 +967,8 @@
       showStart(mode);
       conversationHistory.length = 0;
       localStorage.removeItem('moonbyte-history');
+      setCurrentSession(null);
       renderChatHistory();
-    }
-
-    function clearMemory() {
-      if (conversationHistory.length > 0) {
-        const firstMsg = conversationHistory.find(m => m.role === 'user');
-        const title = firstMsg ? firstMsg.content.slice(0, 30) + '...' : 'Conversation';
-        chatSessions.push({ title, time: Date.now(), messages: [...conversationHistory] });
-        localStorage.setItem('moonbyte-sessions', JSON.stringify(chatSessions));
-        renderChatHistory();
-      }
-      localStorage.removeItem('moonbyte-history');
-      conversationHistory.length = 0;
-      document.getElementById('chat-box').innerHTML = '';
-      addMessage("assistant", "Memory cleared! Fresh start. 🌙");
     }
 
     async function sendMessage() {
@@ -1071,8 +1154,7 @@
 
     // ---------- PayPal sandbox checkout ----------
     // The Client ID is public by design. The Secret never goes in this file.
-    const PAYPAL_CLIENT_ID = 'PASTE_YOUR_SANDBOX_CLIENT_ID_HERE';
-
+   const PAYPAL_CLIENT_ID = 'your-real-client-id';
     function loadPayPal() {
       if (window.paypal) return Promise.resolve();
       return new Promise((resolve, reject) => {
@@ -1209,6 +1291,29 @@
       };
       wrap.append(clock, toggle, reset);
       return wrap;
+    }
+
+    // ---------- Dietary needs ----------
+    const MEAT_WORDS = /\b(chicken|mutton|lamb|beef|pork|bacon|ham|fish|salmon|tuna|prawns?|shrimp|meat|keema|turkey|duck|sausage|anchov(y|ies)|gelatin)\b/i;
+    const NUT_WORDS = /\b(almonds?|cashews?|peanuts?|walnuts?|pistachios?|hazelnuts?|pecans?|nuts?|nutella|marzipan)\b/i;
+
+    function loadDiet() {
+      try { return Object.assign({ veg: false, nutFree: false }, JSON.parse(localStorage.getItem('moonbyte-diet') || '{}')); }
+      catch (e) { return { veg: false, nutFree: false }; }
+    }
+    function saveDiet(d) { try { localStorage.setItem('moonbyte-diet', JSON.stringify(d)); } catch (e) { /* ignore */ } }
+    function dietText(d) {
+      const needs = [d.veg ? 'vegetarian' : '', d.nutFree ? 'nut-free' : ''].filter(Boolean);
+      return needs.length ? ' Dietary needs: ' + needs.join(', ') + '.' : '';
+    }
+    // Warns about ingredients in the recipe that break the chosen diet.
+    function dietWarning(d, ingredients) {
+      const bad = [];
+      ingredients.forEach(i => {
+        if (d.veg && MEAT_WORDS.test(i.name)) bad.push(i.name + ' (not vegetarian)');
+        if (d.nutFree && NUT_WORDS.test(i.name)) bad.push(i.name + ' (contains nuts)');
+      });
+      return bad.length ? 'Heads up: this recipe has ' + bad.join(', ') + '. Ask for a ' + [d.veg ? 'vegetarian' : '', d.nutFree ? 'nut-free' : ''].filter(Boolean).join(' and ') + ' version, or swap these. Always check food labels.' : '';
     }
 
     // ---------- See in cart: current cart and past orders ----------
@@ -1356,6 +1461,22 @@
         details.appendChild(ol);
         card.appendChild(details);
       }
+
+      const diet = loadDiet();
+      const dietRow = el('div', 'diet-row');
+      const dietNote = el('div', 'recipe-note');
+      const refreshDietNote = () => { dietNote.textContent = dietWarning(diet, recipe.ingredients); };
+      [['Vegetarian', 'veg'], ['Nut-free', 'nutFree']].forEach(([label, key]) => {
+        const opt = el('label', 'diet-opt');
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.checked = !!diet[key];
+        box.onchange = () => { diet[key] = box.checked; saveDiet(diet); refreshDietNote(); };
+        opt.append(box, el('span', '', label));
+        dietRow.appendChild(opt);
+      });
+      refreshDietNote();
+      card.append(dietRow, dietNote);
 
       const actions = el('div', 'sub-actions');
       const subsBtn = el('button', 'card-btn', "Find substitutes for what I'm missing");
@@ -1505,7 +1626,7 @@
 
         const reply = await callChat(
           'substitutes',
-          [{ role: 'user', content: `Dish: ${recipe.dish} (serves ${recipe.servings}). Missing ingredients: ` + JSON.stringify(required.map(r => ({ name: r.name, qty: r.qty }))) }]
+          [{ role: 'user', content: `Dish: ${recipe.dish} (serves ${recipe.servings}).${dietText(diet)} Missing ingredients: ` + JSON.stringify(required.map(r => ({ name: r.name, qty: r.qty }))) }]
         );
         const parsed = parseJson(reply);
         wait.remove();
@@ -1531,21 +1652,37 @@
           else openCart(still);
         };
 
-        required.forEach((item, i) => {
+        const findEntry = (list, item) => {
           const want = normalizeName(item.name);
-          const entry = parsed.substitutes.find(s => {
+          return list.find(s => {
             if (!s || typeof s.missing !== 'string') return false;
             const got = normalizeName(s.missing);
             return got && (got === want || got.includes(want) || want.includes(got));
           });
+        };
+
+        // Asks for a different option after a Reject (up to 3 options per ingredient).
+        const askAnother = async (item, tried) => {
+          const reply = await callChat('substitutes', [{ role: 'user', content:
+            `Dish: ${recipe.dish} (serves ${recipe.servings}).${dietText(diet)} Missing ingredients: ` + JSON.stringify([{ name: item.name, qty: item.qty }])
+            + `. Already rejected for ${item.name}: ` + JSON.stringify(tried) + '. Suggest a different option.' }]);
+          const p = parseJson(reply);
+          const list = p && Array.isArray(p.substitutes) ? p.substitutes : [];
+          const e = findEntry(list, item) || list[0];
+          const opt = e && typeof e.option === 'string' ? e.option.trim() : '';
+          if (!opt || tried.some(x => normalizeName(x) === normalizeName(opt))) return null;
+          return e;
+        };
+
+        const fill = (box, i, item, entry, tried) => {
+          box.replaceChildren(el('strong', '', item.name));
           const option = entry && typeof entry.option === 'string' && entry.option.trim() ? entry.option.trim() : null;
-          const box = el('div', 'sub-item');
-          box.appendChild(el('strong', '', item.name));
           if (!entry) {
             status[i] = 'none';
             box.appendChild(el('p', '', 'No suggestion came back for this one.'));
             box.appendChild(el('div', 'sub-status', 'Still missing'));
           } else if (option) {
+            status[i] = 'pending';
             box.appendChild(el('p', '', 'Try: ' + option));
             if (typeof entry.how === 'string' && entry.how) box.appendChild(el('p', 'muted', entry.how));
             if (typeof entry.effect === 'string' && entry.effect) box.appendChild(el('p', 'muted', 'Effect: ' + entry.effect));
@@ -1555,7 +1692,22 @@
             accept.type = reject.type = 'button';
             const status2 = el('div', 'sub-status');
             accept.onclick = () => { status[i] = 'accepted'; status2.textContent = '✅ Using the substitute'; refresh(); };
-            reject.onclick = () => { status[i] = 'rejected'; status2.textContent = 'Still missing'; refresh(); };
+            reject.onclick = () => {
+              status[i] = 'rejected';
+              status2.textContent = 'Still missing';
+              refresh();
+              if (tried.length >= 3) { acts.replaceChildren(); return; }
+              const another = el('button', 'card-btn', 'Suggest another');
+              another.type = 'button';
+              another.onclick = async () => {
+                another.disabled = true;
+                status2.textContent = 'Looking for another option...';
+                const next = await askAnother(item, tried);
+                if (next) { fill(box, i, item, next, [...tried, next.option.trim()]); }
+                else { status2.textContent = 'No other suggestion. Still missing'; acts.replaceChildren(); }
+              };
+              acts.replaceChildren(another);
+            };
             acts.append(accept, reject);
             box.append(acts, status2);
           } else {
@@ -1564,6 +1716,12 @@
             if (typeof entry.effect === 'string' && entry.effect) box.appendChild(el('p', 'muted', entry.effect));
             box.appendChild(el('div', 'sub-status', 'Still missing'));
           }
+        };
+
+        required.forEach((item, i) => {
+          const entry = findEntry(parsed.substitutes, item);
+          const box = el('div', 'sub-item');
+          fill(box, i, item, entry, [entry && typeof entry.option === 'string' ? entry.option.trim() : ''].filter(Boolean));
           result.appendChild(box);
         });
         updateSummary();
@@ -1729,9 +1887,9 @@
       const modeCommands = ['recipe', 'style', 'general'];
 
       if (cmd === 'clear') {
-        clearMemory();
+        deleteCurrentChat();
       } else if (cmd === 'help') {
-        addMessage("assistant", "Commands:\n**/recipe** Recipe mode\n**/style** Style mode\n**/general** General mode\n**/outfit** Outfit suggestion\n**/clear** Clear memory\n**/help** This list");
+        addMessage("assistant", "Commands:\n**/recipe** Recipe mode\n**/style** Style mode\n**/general** General mode\n**/outfit** Outfit suggestion\n**/clear** Delete this chat\n**/help** This list");
       } else if (modeCommands.includes(cmd)) {
         const btn = document.querySelector(`.mode-btn[onclick="switchMode('${cmd}', this)"]`);
         if (btn) switchMode(cmd, btn);
