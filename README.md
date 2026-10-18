@@ -50,6 +50,8 @@ The original Moonbyte already had the chat interface, the Groq function, voice, 
 - [TheMealDB](https://www.themealdb.com) and [Wikipedia](https://www.wikipedia.org) for dish photos (credited on each photo). TheMealDB is used with its free test key.
 - [Netlify](https://www.netlify.com) for hosting and functions.
 
+Sponsor tools from the hackathon list: none used. AI: Groq. Payments: PayPal sandbox. Hosting: Netlify.
+
 ## Run it yourself
 
 You need Node 18 or newer, a free Groq API key from [console.groq.com](https://console.groq.com), and a free PayPal sandbox app from [developer.paypal.com](https://developer.paypal.com).
